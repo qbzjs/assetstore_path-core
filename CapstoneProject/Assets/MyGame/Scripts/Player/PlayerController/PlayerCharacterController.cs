@@ -25,13 +25,13 @@ public enum BonusOrientationMethod
     TowardsGroundSlopeAndGravity,
 }
 
-public class PlayerController : NetworkBehaviour, ICharacterController
+public class PlayerCharacterController : NetworkBehaviour, ICharacterController
 {
     [SerializeField] private PlayerInputController _PlayerInputController;
 
-    public PlayerCharacterCamera CharacterCamera;
+    [SerializeField] private PlayerCharacterCamera CharacterCamera;
 
-    public KinematicCharacterMotor Motor;
+    [SerializeField] private KinematicCharacterMotor Motor;
 
     [Header("Stable Movement")] public float MaxStableMoveSpeed = 10f;
     public float StableMovementSharpness = 15f;
