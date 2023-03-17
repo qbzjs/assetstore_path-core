@@ -73,6 +73,24 @@ public class PlayerInputController : MonoBehaviour
         //Assign the inputactionmap to the player inputaction map that i have setup inside of my input action asset.
         _inputActionMap = controls.FindActionMap("Player");
 
+        move_Action = _inputActionMap.FindAction("Move");
+        look_Action = _inputActionMap.FindAction("Look");
+        jump_Action = _inputActionMap.FindAction("Jump");
+        crouch_Action = _inputActionMap.FindAction("Crouch");
+        sprint_Action = _inputActionMap.FindAction("Sprint");
+        switchPerspectiveCamera_Action = _inputActionMap.FindAction("SwitchPerspective");
+        interact_Action = _inputActionMap.FindAction("Interact");
+        pause_Action = _inputActionMap.FindAction("Pause");
+
+        quickslot_1_action = _inputActionMap.FindAction("Inventory");
+        quickslot_2_action = _inputActionMap.FindAction("DropItem");
+        quickslot_3_action = _inputActionMap.FindAction("Attack");
+        quickslot_4_action = _inputActionMap.FindAction("Console");
+        console_action = _inputActionMap.FindAction("Quickslot_1");
+        dropitem_action = _inputActionMap.FindAction("Quickslot_2");
+        inventory_action = _inputActionMap.FindAction("Quickslot_3");
+        attack_action = _inputActionMap.FindAction("Quickslot_4");
+        
         //subscribe to the oncontrolschanged event to run our function
         //when the controls type (gamepad or mouse and keyboard) has been changed.
         _playerInput.onControlsChanged += ControlsChanged;
@@ -183,7 +201,7 @@ public class PlayerInputController : MonoBehaviour
         {
             Debug.Log("I am a gamepad.");
         }
-        else if (playerInput.currentControlScheme.Equals("Main"))
+        else if (playerInput.currentControlScheme.Equals("Mouse/Keyboard"))
         {
             Debug.Log("I am a Keyboard and mouse.");
         }
