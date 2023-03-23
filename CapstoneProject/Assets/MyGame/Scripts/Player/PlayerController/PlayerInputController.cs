@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using BehaviorDesigner.Runtime.Tasks.Unity.UnityParticleSystem;
+using Mirror;
 using Mono.CSharp;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -9,7 +10,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Users;
 using Event = Mono.CSharp.Event;
 
-public class PlayerInputController : MonoBehaviour
+public class PlayerInputController : NetworkBehaviour
 {
     //Reference to the whoele inputactionasset which contains everything.
     [SerializeField] private InputActionAsset controls;
@@ -38,8 +39,8 @@ public class PlayerInputController : MonoBehaviour
         dropitem_action,
         inventory_action,
         attack_action;
-    
-    
+
+
     //our reference to the values of the look and move from the action
     public Vector2 move;
     public Vector2 look;
@@ -65,10 +66,8 @@ public class PlayerInputController : MonoBehaviour
     public bool cursorInputForLook = true;
     public float MouseSensitivity = 1f;
 
-    
-    
-    
-    public void OnEnable()
+
+    public override void OnStartAuthority()
     {
         //Assign the inputactionmap to the player inputaction map that i have setup inside of my input action asset.
         _inputActionMap = controls.FindActionMap("Player");
@@ -90,7 +89,7 @@ public class PlayerInputController : MonoBehaviour
         dropitem_action = _inputActionMap.FindAction("Quickslot_2");
         inventory_action = _inputActionMap.FindAction("Quickslot_3");
         attack_action = _inputActionMap.FindAction("Quickslot_4");
-        
+
         //subscribe to the oncontrolschanged event to run our function
         //when the controls type (gamepad or mouse and keyboard) has been changed.
         _playerInput.onControlsChanged += ControlsChanged;
@@ -144,7 +143,7 @@ public class PlayerInputController : MonoBehaviour
         attack_action.canceled += OnEndAttack;
     }
 
-    public void OnDisable()
+    public override void OnStopAuthority()
     {
         //unsubscribe to the oncontrolschanged event to avoid memory leaks this will disconnect it from the function.
         _playerInput.onControlsChanged -= ControlsChanged;
@@ -221,6 +220,7 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnMove(InputAction.CallbackContext ctx)
     {
+        Debug.Log($"The net id of this object moving is : {netId}, the object num is {NetworkClient.connection} " );
         MoveInput(ctx.action.ReadValue<Vector2>());
     }
 
@@ -228,7 +228,6 @@ public class PlayerInputController : MonoBehaviour
     {
         MoveInput(new Vector2(0, 0));
     }
-
 
 
     public void OnLook(InputAction.CallbackContext ctx)
@@ -241,7 +240,7 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnEndLook(InputAction.CallbackContext ctx)
     {
-        //LookInput(new Vector2(0, 0));
+        LookInput(new Vector2(0, 0));
     }
 
 
@@ -472,10 +471,12 @@ public class PlayerInputController : MonoBehaviour
     {
         if (newPauseState)
         {
+            this.gameObject.GetComponent<PlayerCharacterController>().enabled = false;
 //            _gameManager.PauseGame();
         }
         else
         {
+            this.gameObject.GetComponent<PlayerCharacterController>().enabled = true;
             //  _gameManager.UnpauseGame();
         }
 

@@ -6,11 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/FirstPersonExplorationKit/Scenes/DemoScenes_2.2/demoMainMenu_0.unity
-    guid: 6a819d87835309642b03dd8b59dbc760
+    path: Assets/MyGame/Scenes/Prototyping.unity
+    guid: 9ccf4add5b866434d9b8222bd2df085b
   - enabled: 1
-    path: Assets/FirstPersonExplorationKit/Scenes/DemoScenes_2.2/demoScene_1.unity
-    guid: a0e3a77ed4adc5c48bfe8cf3fdef22ff
+    path: Assets/MyGame/Scenes/PreGame_BootStrapScene.unity
+    guid: 0bbf2e4c5affc3e478251e7be6b6d4ba
   - enabled: 1
-    path: Assets/FirstPersonExplorationKit/Scenes/DemoScenes_2.2/demoScene_2.unity
-    guid: 6dd73e1d1daa41a418e414d48396610e
+    path: Assets/MyGame/Scenes/MainMenu.unity
+    guid: 0b92e8a6860d3994f9a76df20efbd9ee
+  - enabled: 1
+    path: Assets/MyGame/Scenes/Lockwood_CourtHouse.unity
+    guid: 08e055c130f769b4aa9f9bd5b4aac05e
+  - enabled: 1
+    path: Assets/MyGame/Scenes/Lockwood_Prison_1.unity
+    guid: 6d8b4ea660a3a594db38c8a9d514365b
+  m_configObjects: {}

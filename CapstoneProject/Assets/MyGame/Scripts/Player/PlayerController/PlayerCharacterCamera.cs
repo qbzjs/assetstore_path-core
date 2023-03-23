@@ -1,11 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
+using Mirror;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-
-public class PlayerCharacterCamera : MonoBehaviour
+public class PlayerCharacterCamera : NetworkBehaviour
 {
+    [Header("General Stuff")] [SerializeField]
+    private PlayerInputController _playerInputController;
+    [SerializeField]
+    private PlayerCharacterController _playerCharacterController;
+
+    [SerializeField]
+    public Transform ObjectToOrbit = null;
+    
     [Header("Framing")] public Camera Camera;
+    
     public Vector2 FollowPointFraming = new Vector2(0f, 0f);
     public float FollowingSharpness = 10000f;
 
@@ -46,7 +57,8 @@ public class PlayerCharacterCamera : MonoBehaviour
 
     private const int MaxObstructions = 32;
 
-    void OnValidate()
+
+    private void OnValidate()
     {
         DefaultDistance = Mathf.Clamp(DefaultDistance, MinDistance, MaxDistance);
         DefaultVerticalAngle = Mathf.Clamp(DefaultVerticalAngle, MinVerticalAngle, MaxVerticalAngle);
@@ -54,7 +66,8 @@ public class PlayerCharacterCamera : MonoBehaviour
 
     void Awake()
     {
-        Transform = this.transform;
+        RotationSpeed = _playerInputController.MouseSensitivity;
+        Transform = ObjectToOrbit;
 
         _currentDistance = DefaultDistance;
         TargetDistance = _currentDistance;
@@ -74,6 +87,8 @@ public class PlayerCharacterCamera : MonoBehaviour
 
     public void UpdateWithInput(float deltaTime, float zoomInput, Vector3 rotationInput)
     {
+        if (!_playerCharacterController.hasAuthority || !Application.isFocused) { return; }
+
         if (FollowTransform)
         {
             if (InvertX)
