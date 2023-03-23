@@ -5,15 +5,10 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerCharacterCamera : NetworkBehaviour
+public class PlayerCharacterCamera : MonoBehaviour
 {
-    [Header("General Stuff")] [SerializeField]
-    private PlayerInputController _playerInputController;
-    [SerializeField]
-    private PlayerCharacterController _playerCharacterController;
-
-    [SerializeField]
-    public Transform ObjectToOrbit = null;
+   // [SerializeField]
+  //  public Transform ObjectToOrbit = null;
     
     [Header("Framing")] public Camera Camera;
     
@@ -56,8 +51,7 @@ public class PlayerCharacterCamera : NetworkBehaviour
     private Vector3 _currentFollowPosition;
 
     private const int MaxObstructions = 32;
-
-
+    
     private void OnValidate()
     {
         DefaultDistance = Mathf.Clamp(DefaultDistance, MinDistance, MaxDistance);
@@ -66,8 +60,7 @@ public class PlayerCharacterCamera : NetworkBehaviour
 
     void Awake()
     {
-        RotationSpeed = _playerInputController.MouseSensitivity;
-        Transform = ObjectToOrbit;
+        Transform = this.transform;
 
         _currentDistance = DefaultDistance;
         TargetDistance = _currentDistance;
@@ -87,8 +80,6 @@ public class PlayerCharacterCamera : NetworkBehaviour
 
     public void UpdateWithInput(float deltaTime, float zoomInput, Vector3 rotationInput)
     {
-        if (!_playerCharacterController.hasAuthority || !Application.isFocused) { return; }
-
         if (FollowTransform)
         {
             if (InvertX)

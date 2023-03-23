@@ -10,8 +10,10 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Users;
 using Event = Mono.CSharp.Event;
 
-public class PlayerInputController : NetworkBehaviour
+public class PlayerInputController : MonoBehaviour
 {
+    [SerializeField] private PlayerCharacterNetworkController _playerCharacterNetworkController;
+
     //Reference to the whoele inputactionasset which contains everything.
     [SerializeField] private InputActionAsset controls;
 
@@ -67,7 +69,7 @@ public class PlayerInputController : NetworkBehaviour
     public float MouseSensitivity = 1f;
 
 
-    public override void OnStartAuthority()
+    public void OnEnable()
     {
         //Assign the inputactionmap to the player inputaction map that i have setup inside of my input action asset.
         _inputActionMap = controls.FindActionMap("Player");
@@ -143,7 +145,7 @@ public class PlayerInputController : NetworkBehaviour
         attack_action.canceled += OnEndAttack;
     }
 
-    public override void OnStopAuthority()
+    public void OnDisable()
     {
         //unsubscribe to the oncontrolschanged event to avoid memory leaks this will disconnect it from the function.
         _playerInput.onControlsChanged -= ControlsChanged;
@@ -220,18 +222,32 @@ public class PlayerInputController : NetworkBehaviour
 
     public void OnMove(InputAction.CallbackContext ctx)
     {
-        Debug.Log($"The net id of this object moving is : {netId}, the object num is {NetworkClient.connection} " );
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         MoveInput(ctx.action.ReadValue<Vector2>());
     }
 
     public void OnEndMove(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         MoveInput(new Vector2(0, 0));
     }
 
 
     public void OnLook(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         if (cursorInputForLook)
         {
             LookInput(ctx.action.ReadValue<Vector2>());
@@ -240,136 +256,266 @@ public class PlayerInputController : NetworkBehaviour
 
     public void OnEndLook(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         LookInput(new Vector2(0, 0));
     }
 
 
     public void OnJump(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         JumpInput(ctx.action.IsPressed());
     }
 
 
     public void OnEndJump(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         JumpInput(false);
     }
 
     public void OnSprint(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         SprintInput(ctx.action.IsPressed());
     }
 
     public void OnEndSprint(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         SprintInput(false);
     }
 
     public void OnCrouch(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         CrouchInput(ctx.action.IsPressed());
     }
 
 
     public void OnEndCrouch(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         CrouchInput(false);
     }
 
     public void OnEndSwitchCameraPerspective(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         SwitchCameraPerspectiveInput(ctx.action.IsPressed());
     }
 
     public void OnSwitchCameraPerspective(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         SwitchCameraPerspectiveInput(false);
     }
 
     public void OnPause(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         pause = !pause;
         PauseInput(pause);
     }
 
     public void OnInventory(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         inventory = !inventory;
         InventoryInput(inventory);
     }
 
     public void OnDropItem(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         DropItemInput(dropitem);
     }
 
     public void OnDropItemEnd(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         DropItemInput(false);
     }
 
     public void OnInteract(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         InteractInput(ctx.action.IsPressed());
     }
 
     public void OnEndInteract(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         InteractInput(false);
     }
 
     public void OnQuickSlotOne(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         QuickSlotOneInput(ctx.action.IsPressed());
     }
 
     public void OnEndQuickSlotOne(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         QuickSlotOneInput(false);
     }
 
     public void OnQuickSlotTwo(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         QuickSlotTwoInput(ctx.action.IsPressed());
     }
 
     public void OnEndQuickSlotTwo(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         QuickSlotTwoInput(false);
     }
 
     public void OnQuickSlotThree(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         QuickSlotThreeInput(ctx.action.IsPressed());
     }
 
     public void OnEndQuickSlotThree(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         QuickSlotThreeInput(false);
     }
 
     public void OnQuickSlotFour(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         QuickSlotFourInput(ctx.action.IsPressed());
     }
 
     public void OnEndQuickSlotFour(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         QuickSlotFourInput(false);
     }
 
     public void OnAttack(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         AttackInput(ctx.action.IsPressed());
     }
 
     public void OnEndAttack(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         AttackInput(false);
     }
 
     public void OnConsole(InputAction.CallbackContext ctx)
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
         console = !console;
         ConsoleInput(console);
     }
@@ -472,11 +618,15 @@ public class PlayerInputController : NetworkBehaviour
         if (newPauseState)
         {
             this.gameObject.GetComponent<PlayerCharacterController>().enabled = false;
+            cursorLocked = false;
+            Cursor.lockState = CursorLockMode.None;
 //            _gameManager.PauseGame();
         }
         else
         {
             this.gameObject.GetComponent<PlayerCharacterController>().enabled = true;
+            cursorLocked = true;
+            Cursor.lockState = CursorLockMode.Locked;
             //  _gameManager.UnpauseGame();
         }
 

@@ -28,11 +28,13 @@ public enum BonusOrientationMethod
     TowardsGroundSlopeAndGravity,
 }
 
-public class PlayerCharacterController : NetworkBehaviour, ICharacterController
+public class PlayerCharacterController : MonoBehaviour, ICharacterController
 {
+    [SerializeField] private PlayerCharacterNetworkController _playerCharacterNetworkController;
+
     [SerializeField] private PlayerInputController _PlayerInputController;
 
-    // [SerializeField] private PlayerCharacterCamera CharacterCamera;
+    [SerializeField] private PlayerCharacterCamera CharacterCamera;
 
     [SerializeField] private KinematicCharacterMotor Motor;
 
@@ -77,19 +79,6 @@ public class PlayerCharacterController : NetworkBehaviour, ICharacterController
     private Vector3 lastInnerNormal = Vector3.zero;
     private Vector3 lastOuterNormal = Vector3.zero;
 
-    [Header("Server Values")] [SerializeField] [SyncVar(hook = nameof(ServerPositionChanged))]
-    private Vector3 ServerPosition;
-
-    [SerializeField] [SyncVar(hook = nameof(ServerRotationChanged))]
-    private Quaternion ServerRotation;
-
-    [SerializeField] [SyncVar(hook = nameof(ServerScaleChanged))]
-    private Vector3 ServerScale;
-
-    [SerializeField] private Vector3 lastSentPosition;
-    [SerializeField] private Quaternion lastSentRotation;
-    [SerializeField] private Vector3 lastSentScale;
-
 
     private void Awake()
     {
@@ -101,127 +90,75 @@ public class PlayerCharacterController : NetworkBehaviour, ICharacterController
     // Start is called before the first frame update
     void Start()
     {
+        if (!_playerCharacterNetworkController.isLocalPlayer)
+        {
+            return;
+        }
+
+        CharacterCamera = GameObject.FindWithTag("MainCamera").GetComponent<PlayerCharacterCamera>();
+
         // // Tell camera to follow transform
-        // CharacterCamera.SetFollowTransform(CameraFollowPoint);
-        //
+        CharacterCamera.SetFollowTransform(CameraFollowPoint);
+
         // // Ignore the character's collider(s) for camera obstruction checks
-        // CharacterCamera.IgnoredColliders.Clear();
-        // CharacterCamera.IgnoredColliders.AddRange(GetComponentsInChildren<Collider>());
+        CharacterCamera.IgnoredColliders.Clear();
+        CharacterCamera.IgnoredColliders.AddRange(GetComponentsInChildren<Collider>());
+
+        CharacterCamera.RotationSpeed = _PlayerInputController.MouseSensitivity;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!isLocalPlayer)
+        if (!_playerCharacterNetworkController.isLocalPlayer)
         {
             Debug.Log("Hello i am in the update being a naughty naughyt");
-            // Interpolate the position and rotation for non-local players
-            // Motor.SetPositionAndRotation(
-            //     Vector3.Lerp(Motor.TransientPosition, ServerPosition, Time.deltaTime * 10f),
-            //     Quaternion.Lerp(Motor.TransientRotation, ServerRotation, Time.deltaTime * 10f));
             return;
         }
 
-
-        Debug.Log("Executing commands for : " + netIdentity.gameObject.name);
         HandleKinematicsMovementValueAssignment();
 
-        //     Cmd_ServerUpdatePositionAndRotation(transform.position, transform.rotation);
+        // Check if the position or rotation has changed enough to send an update - this helps make it more efficient so we do not send a change unless we have made a certain change.
+        if (Vector3.Distance(transform.position, _playerCharacterNetworkController.lastSentPosition) > 0.01f ||
+            Quaternion.Angle(transform.rotation, _playerCharacterNetworkController.lastSentRotation) > 1f ||
+            MeshRoot.localScale != _playerCharacterNetworkController.lastSentScale)
+        {
+            //     //Send a update to the server to check to see if we moved or rotated after everything has been updated.
+            _playerCharacterNetworkController.Cmd_ServerUpdatePositionAndRotation(transform.position,
+                transform.rotation, MeshRoot.localScale);
+
+            _playerCharacterNetworkController.lastSentRotation = transform.rotation;
+            _playerCharacterNetworkController.lastSentPosition = transform.position;
+            _playerCharacterNetworkController.lastSentScale = MeshRoot.localScale;
+        }
     }
 
     private void FixedUpdate()
     {
-        if (!hasAuthority || !Application.isFocused)
+        if (!_playerCharacterNetworkController.hasAuthority || !Application.isFocused)
         {
             return;
         }
 
-        if (!isLocalPlayer) return;
+        if (!_playerCharacterNetworkController.isLocalPlayer) return;
     }
 
     private void LateUpdate()
     {
-        if (!isLocalPlayer) return;
-
+        if (!_playerCharacterNetworkController.isLocalPlayer) return;
 
         // // Handle rotating the camera along with physics movers
-        // if (CharacterCamera.RotateWithPhysicsMover && Motor.AttachedRigidbody != null)
-        // {
-        //     CharacterCamera.PlanarDirection =
-        //         Motor.AttachedRigidbody.GetComponent<PhysicsMover>().RotationDeltaFromInterpolation *
-        //         CharacterCamera.PlanarDirection;
-        //     CharacterCamera.PlanarDirection =
-        //         Vector3.ProjectOnPlane(CharacterCamera.PlanarDirection, Motor.CharacterUp).normalized;
-        // }
-
-//        HandleCharacterCameraInput();
-    }
-
-    #region Server Functions
-
-    #endregion
-
-    #region Client Functions
-
-    #endregion
-
-    #region Commands
-
-    [Command]
-    public void Cmd_ServerUpdatePositionAndRotation(Vector3 position, Quaternion rotation, Vector3 scale)
-    {
-        ServerPosition = position;
-        ServerRotation = rotation;
-        ServerScale = scale;
-
-        RpcCmd_ServerBroadcastUpdatedPositionAndRotation(ServerPosition, ServerRotation, ServerScale);
-    }
-
-    #endregion
-
-    #region ClientRPC_Commands
-
-    [ClientRpc]
-    public void RpcCmd_ServerBroadcastUpdatedPositionAndRotation(Vector3 newPosition, Quaternion newRotation,
-        Vector3 newScale)
-    {
-        if (!isLocalPlayer)
+        if (CharacterCamera.RotateWithPhysicsMover && Motor.AttachedRigidbody != null)
         {
-            // Update the position and rotation on non-local players
-            Motor.SetPosition(newPosition, false);
-            Motor.SetRotation(newRotation, false);
-            transform.localScale = newScale;
-
-            Debug.Log("Updated the players position,rotation and scale on the server.");
+            CharacterCamera.PlanarDirection =
+                Motor.AttachedRigidbody.GetComponent<PhysicsMover>().RotationDeltaFromInterpolation *
+                CharacterCamera.PlanarDirection;
+            CharacterCamera.PlanarDirection =
+                Vector3.ProjectOnPlane(CharacterCamera.PlanarDirection, Motor.CharacterUp).normalized;
         }
+
+        HandleCharacterCameraInput();
     }
-
-    #endregion
-
-    #region Target_RPC_Commands
-
-    #endregion
-
-    #region General Functions
-
-    private void ServerPositionChanged(Vector3 oldValue, Vector3 newValue)
-    {
-        Debug.Log("i am the server and have allowed this change of : movement\nthe old position value: " + oldValue +
-                  " the new poisition value: " + newValue);
-    }
-
-    private void ServerRotationChanged(Quaternion oldValue, Quaternion newValue)
-    {
-        Debug.Log("i am the server and have allowed this change of : rotation \nthe old position value: " + oldValue +
-                  " the new poisition value: " + newValue);
-    }
-
-    private void ServerScaleChanged(Vector3 oldValue, Vector3 newValue)
-    {
-        Debug.Log("i am the server and have allowed this change of : scale \nthe old position value: " + oldValue +
-                  " the new poisition value: " + newValue);
-    }
-
 
     public void HandleCharacterCameraInput()
     {
@@ -237,18 +174,18 @@ public class PlayerCharacterController : NetworkBehaviour, ICharacterController
 #if UNITY_WEBGL
       //  scrollInput = 0f;
 #endif
-        // if (CharacterCamera != null)
-        // {
-        //     // Apply inputs to the camera
-        //     CharacterCamera.UpdateWithInput(Time.deltaTime, 0, lookInputVector);
-        //
-        //     // Handle toggling zoom level
-        //     if (Input.GetMouseButtonDown(1))
-        //     {
-        //         CharacterCamera.TargetDistance =
-        //             (CharacterCamera.TargetDistance == 0f) ? CharacterCamera.DefaultDistance : 0f;
-        //     }   
-        // }
+        if (CharacterCamera != null)
+        {
+            // Apply inputs to the camera
+            CharacterCamera.UpdateWithInput(Time.deltaTime, 0, lookInputVector);
+
+            // Handle toggling zoom level
+            if (Input.GetMouseButtonDown(1))
+            {
+                CharacterCamera.TargetDistance =
+                    (CharacterCamera.TargetDistance == 0f) ? CharacterCamera.DefaultDistance : 0f;
+            }
+        }
     }
 
     public void HandleKinematicsMovementValueAssignment()
@@ -258,24 +195,24 @@ public class PlayerCharacterController : NetworkBehaviour, ICharacterController
             Vector3.ClampMagnitude(new Vector3(_PlayerInputController.move.x, 0f, _PlayerInputController.move.y),
                 1f);
 
-        // // Calculate camera direction and rotation on the character plane
-        // Vector3 cameraPlanarDirection = Vector3
-        //     .ProjectOnPlane(CharacterCamera.ObjectToOrbit.rotation * Vector3.forward, Motor.CharacterUp).normalized;
-        // if (cameraPlanarDirection.sqrMagnitude == 0f)
-        // {
-        //     cameraPlanarDirection = Vector3
-        //         .ProjectOnPlane(CharacterCamera.ObjectToOrbit.rotation * Vector3.up, Motor.CharacterUp).normalized;
-        // }
+        // Calculate camera direction and rotation on the character plane
+        Vector3 cameraPlanarDirection = Vector3
+            .ProjectOnPlane(CharacterCamera.Transform.rotation * Vector3.forward, Motor.CharacterUp).normalized;
+        if (cameraPlanarDirection.sqrMagnitude == 0f)
+        {
+            cameraPlanarDirection = Vector3
+                .ProjectOnPlane(CharacterCamera.Transform.rotation * Vector3.up, Motor.CharacterUp).normalized;
+        }
 
-        //Quaternion cameraPlanarRotation = Quaternion.LookRotation(cameraPlanarDirection, Motor.CharacterUp);
+        Quaternion cameraPlanarRotation = Quaternion.LookRotation(cameraPlanarDirection, Motor.CharacterUp);
 
         switch (CurrentCharacterState)
         {
             case CharacterState.Default:
             {
                 // Move and look inputs
-                //_moveInputVector = cameraPlanarRotation * moveInputVector;
-                _moveInputVector = moveInputVector;
+                _moveInputVector = cameraPlanarRotation * moveInputVector;
+                //_moveInputVector = moveInputVector;
 
                 switch (OrientationMethod)
                 {
@@ -317,6 +254,9 @@ public class PlayerCharacterController : NetworkBehaviour, ICharacterController
         }
     }
 
+    //These are the implementations for the icharacter controller.
+
+    #region ICharacterController_Interface_Implementations
 
     /// <summary>
     /// Handles movement state transitions and enter/exit callbacks
@@ -356,12 +296,6 @@ public class PlayerCharacterController : NetworkBehaviour, ICharacterController
             }
         }
     }
-
-    #endregion"
-
-    //These are the implementations for the icharacter controller.
-
-    #region ICharacterController_Interface_Implementations
 
     /// <summary>
     /// This is called when the motor wants to know what its rotation should be right now
@@ -614,19 +548,6 @@ public class PlayerCharacterController : NetworkBehaviour, ICharacterController
         {
             case CharacterState.Default:
             {
-                // Check if the position or rotation has changed enough to send an update - this helps make it more efficient so we do not send a change unless we have made a certain change.
-                if (Vector3.Distance(transform.position, lastSentPosition) > 0.005f ||
-                    Quaternion.Angle(transform.rotation, lastSentRotation) > 1f ||
-                    transform.localScale != lastSentScale)
-                {
-                    //     //Send a update to the server to check to see if we moved or rotated after everything has been updated.
-                    Cmd_ServerUpdatePositionAndRotation(transform.position, transform.rotation, transform.localScale);
-
-                    lastSentRotation = transform.rotation;
-                    lastSentPosition = transform.position;
-                    lastSentScale = transform.localScale;
-                }
-
                 // Handle jump-related values
                 {
                     // Handle jumping pre-ground grace period
