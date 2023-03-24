@@ -9,7 +9,6 @@ using UnityEngine.InputSystem;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 
-
 public enum CharacterState
 {
     Default,

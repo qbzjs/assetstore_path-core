@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 using KinematicCharacterController;
+
 public class PlayerCharacterNetworkController : NetworkBehaviour
 {
     [Header("Server Values")] [SerializeField] [SyncVar(hook = nameof(ServerPositionChanged))]
@@ -21,11 +22,10 @@ public class PlayerCharacterNetworkController : NetworkBehaviour
     [SerializeField] private KinematicCharacterMotor Motor;
     [SerializeField] private Transform MeshRoot;
     
-    
     private void ServerScaleChanged(Vector3 oldValue, Vector3 newValue)
     {
         Debug.Log("i am the server and have allowed this change of : scale \nthe old position value: " + oldValue +
-                  " the new poisition value: " + newValue);  
+                  " the new poisition value: " + newValue);
     }
 
     private void ServerRotationChanged(Quaternion oldValue, Quaternion newValue)
@@ -35,7 +35,8 @@ public class PlayerCharacterNetworkController : NetworkBehaviour
     }
 
     private void ServerPositionChanged(Vector3 oldValue, Vector3 newValue)
-    {    //Debug.Log("i am the server and have allowed this change of : movement\nthe old position value: " + oldValue +
+    {
+        //Debug.Log("i am the server and have allowed this change of : movement\nthe old position value: " + oldValue +
         //      " the new poisition value: " + newValue);
     }
 
