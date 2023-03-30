@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
+using UnityEngine.SceneManagement;
 
 public class PrisonEscape_NetworkManager : NetworkManager
 {
@@ -24,36 +25,71 @@ public class PrisonEscape_NetworkManager : NetworkManager
         }
     }
 
-    public override void OnServerChangeScene(string newSceneName)
+    private void Update()
     {
-        StartCoroutine(sl.ServerChangeSceneAsync(newSceneName));
+        Debug.Log("Is the network active: " + isNetworkActive);
+        if (networkSceneName != null)
+        {
+            Debug.Log("Current network scene location: " + networkSceneName);
+        }
+
+        Debug.Log("Current scenemanager active scene : " + SceneManager.GetActiveScene().name);
     }
 
-    public void OnClientChangeSceneBaseCall(string newSceneName, SceneOperation sceneOperation, bool customHandling)
+    public override void OnServerChangeScene(string newSceneName)
     {
-        base.OnClientChangeScene(newSceneName, sceneOperation, customHandling);
     }
 
     public override void OnClientChangeScene(string newSceneName, SceneOperation sceneOperation, bool customHandling)
     {
-        StartCoroutine(sl.ClientSceneLoadAsync(clientLoadOperation, newSceneName, sceneOperation, customHandling));
+        Debug.Log("The clients server is changing from: " + SceneManager.GetActiveScene().name);
+        Debug.Log("The clients server is now changing too : " + newSceneName);
+        Debug.Log("The clients server operation for loading is : " + sceneOperation.ToString());
     }
     
+
     public void UnloadSceneFromServer(string sceneName)
     {
         if (NetworkServer.active)
         {
-            StartCoroutine(sl.ServerUnloadSceneAsync(sceneName));
+            sl.UnloadLevelFromServer(sceneName);
         }
     }
 
-    //change the internals of mirror to use the index as well but i guess the string works for now.
-    public void ChangeScene(string SceneName)
+    public void UnloadSceneFromClient(string sceneName)
+    {
+        sl.UnloadLevelFromClient(sceneName);
+    }
+
+    public override void ServerChangeScene(string newSceneToLoad)
     {
         if (NetworkServer.active)
         {
-            ServerChangeScene(SceneName);
+            Debug.Log("Currently active scene for the server :" + NetworkManager.networkSceneName);
+
+            if (string.IsNullOrWhiteSpace(newSceneToLoad))
+            {
+                Debug.LogError("ServerChangeScene empty scene name");
+                return;
+            }
+
+            if (NetworkServer.isLoadingScene && newSceneToLoad == networkSceneName)
+            {
+                Debug.LogError($"Scene change is already in progress for {newSceneToLoad}");
+                return;
+            }
+
+            NetworkServer.SetAllClientsNotReady();
+            networkSceneName = newSceneToLoad;
+
+            // Let server prepare for scene change
+            OnServerChangeScene(newSceneToLoad);
+
+            StartCoroutine(sl.ServerChangeSceneAsync(newSceneToLoad));
+
         }
+
+        Debug.Log("Currently active scene for the server after everything:" + NetworkManager.networkSceneName);
     }
 
     public bool AreAllClientsReadyToLoad()

@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class SceneLoader : MonoBehaviour
+public class SceneLoader : NetworkBehaviour
 {
     private static SceneLoader _instance;
 
@@ -25,7 +25,6 @@ public class SceneLoader : MonoBehaviour
 
     [SerializeField] private float LoadingSceneProgressAmount;
     [SerializeField] private PrisonEscape_NetworkManager _networkManager;
-    [SerializeField] private NetworkedSceneLoader _networkedSceneLoader;
 
     public float loadingSceneProgressAmount
     {
@@ -35,143 +34,12 @@ public class SceneLoader : MonoBehaviour
 
     [SerializeField] public float MinimumLevelLoadBeforeSceneTransitionAllowed = 0.90f;
 
-    #region Client Scene Loading/Unloading
+    #region Server/Client Scene Loading/Unloading
 
-    public IEnumerator ClientSceneLoadAsync(AsyncOperation ao, string sceneToLoad, SceneOperation loadSceneMode,
-        bool customHandling)
-    {
-        ao = SceneManager.LoadSceneAsync(sceneToLoad, LoadSceneMode.Additive);
-        ao.allowSceneActivation = false;
-
-        // Notify the server that this client is ready
-        _networkedSceneLoader.CmdClientReady();
-
-        while (!ao.allowSceneActivation)
-        {
-            yield return null;
-        }
-
-        // Wait for the client to finish loading the new scene
-        while (!ao.isDone)
-        {
-            yield return null;
-        }
-
-
-        // Call the base method for handling scene changes
-        if (!customHandling)
-        {
-            _networkManager.OnClientChangeSceneBaseCall(sceneToLoad, loadSceneMode, customHandling);
-        }
-    }
-    //right now mirror only implements the scenebyloadname not by index so i will add that later.
-    // public IEnumerator ClientSceneLoadAsync(int sceneIndexToLoad, LoadSceneMode loadSceneMode,bool customHandling)
-    // {
-    //     AsyncOperation ao = SceneManager.LoadSceneAsync(sceneIndexToLoad, LoadSceneMode.Additive);
-    //     ao.allowSceneActivation = false;
-    //
-    //     // Notify the server that this client is ready
-    //     _networkManager.CmdClientReady();
-    //     
-    //     while (!ao.allowSceneActivation)
-    //     {
-    //         yield return null;
-    //     }
-    //     
-    //     // Wait for the client to finish loading the new scene
-    //     while (!ao.isDone)
-    //     {
-    //         yield return null;
-    //     }
-    //     
-    //     
-    //     // Call the base method for handling scene changes
-    //     if (!customHandling)
-    //     {
-    //         _networkManager.OnClientChangeSceneBaseCall(sceneIndexToLoad, loadSceneMode, customHandling);
-    //     }
-    // }
-
-
-    // public IEnumerator DeloadClientSceneAsynchronous(int sceneIndexToLoad, UnloadSceneOptions options)
-    //   {
-    //       AsyncOperation ao = SceneManager.UnloadSceneAsync(sceneIndexToLoad, UnloadSceneOptions.None);
-    //       ao.allowSceneActivation = false;
-    //
-    //       while (!ao.isDone)
-    //       {
-    //           LoadingSceneProgressAmount = ao.progress;
-    //           float progress = Mathf.Clamp01(ao.progress / 0.9f);
-    //           //       LoadingText.text = "Loading: " + (int)(progress * 100) + "%";
-    //           Debug.Log("Unloading: " + Mathf.Clamp01(ao.progress / 0.9f));
-    //           Debug.Log("Unloading: " + (int)(progress * 100) + "%");
-    //
-    //           if (ao.progress >= MinimumLevelLoadBeforeSceneTransitionAllowed)
-    //               ao.allowSceneActivation = true;
-    //
-    //           yield return new WaitForEndOfFrame();
-    //       }
-    //
-    //       if (loadingSceneProgressAmount >= 1f)
-    //       {
-    //           loadingSceneProgressAmount = 0;
-    //       }
-    //
-    //
-    //       yield return new WaitForEndOfFrame();
-    //   }
-
-
-    // public IEnumerator DeloadClientSceneAsynchronous(string sceneName, UnloadSceneOptions options)
-    // {
-    //     AsyncOperation ao = SceneManager.UnloadSceneAsync(sceneName, UnloadSceneOptions.None);
-    //     ao.allowSceneActivation = false;
-    //
-    //     while (!ao.isDone)
-    //     {
-    //         LoadingSceneProgressAmount = ao.progress;
-    //         float progress = Mathf.Clamp01(ao.progress / 0.9f);
-    //         //       LoadingText.text = "Loading: " + (int)(progress * 100) + "%";
-    //         Debug.Log("Unloading: " + Mathf.Clamp01(ao.progress / 0.9f));
-    //         Debug.Log("Unloading: " + (int)(progress * 100) + "%");
-    //
-    //         if (ao.progress >= MinimumLevelLoadBeforeSceneTransitionAllowed)
-    //             ao.allowSceneActivation = true;
-    //
-    //         yield return new WaitForEndOfFrame();
-    //     }
-    //
-    //     if (loadingSceneProgressAmount >= 1f)
-    //     {
-    //         loadingSceneProgressAmount = 0;
-    //     }
-    //
-    //
-    //     yield return new WaitForEndOfFrame();
-    // }
-
-    public IEnumerator ClientUnloadSceneAsync(string sceneName)
-    {
-        // Unload the scene asynchronously on the client
-        AsyncOperation clientUnloadOperation = SceneManager.UnloadSceneAsync(sceneName);
-
-        // Wait for the client to finish unloading the scene
-        while (!clientUnloadOperation.isDone)
-        {
-            yield return null;
-        }
-    }
-
-    #endregion
-
-
-    #region Server Scene Loading/Unloading
-
+    [Server]
+    //This is basically handling both client and server - there is alot going on to explain this.
     public IEnumerator ServerChangeSceneAsync(string newSceneName)
     {
-        // Notify clients to start loading the new scene
-        _networkManager.ServerChangeScene(newSceneName);
-
         // Load the new scene asynchronously on the server
         AsyncOperation serverLoadOperation = SceneManager.LoadSceneAsync(newSceneName, LoadSceneMode.Additive);
         serverLoadOperation.allowSceneActivation = false;
@@ -190,28 +58,59 @@ public class SceneLoader : MonoBehaviour
         {
             yield return null;
         }
+        SceneManager.SetActiveScene(SceneManager.GetSceneByName(newSceneName));
+        
+        // Notify clients that the scene has changed
+        NetworkServer.SendToAll(new SceneMessage
+            { sceneName = newSceneName, sceneOperation = SceneOperation.LoadAdditive });
 
-        // Notify clients to activate the new scene
-        _networkedSceneLoader.RpcClientActivateNewScene();
+        NetworkServer.isLoadingScene = false;
+        _networkManager.OnServerSceneChanged(newSceneName);
+
+        // Set all clients as ready to start gameplay
+        foreach (var conn in NetworkServer.connections)
+        {
+            if (conn.Value != null && conn.Value.isReady)
+                continue;
+
+            NetworkServer.SetClientReady(conn.Value);
+        }
     }
 
-    public IEnumerator ServerUnloadSceneAsync(string sceneName)
+    [Command]
+    public void UnloadLevelFromServer(string sceneToUnload)
     {
-        // Notify clients to start unloading the scene
-        _networkedSceneLoader.RpcClientUnloadScene(sceneName);
-
-        // Unload the scene asynchronously on the server
-        AsyncOperation serverUnloadOperation = SceneManager.UnloadSceneAsync(sceneName);
-
-        // Wait for the server to finish unloading the scene
-        while (!serverUnloadOperation.isDone)
+        if (isServer)
         {
-            yield return null;
+            // Check if the scene is loaded additively
+            if (SceneManager.GetSceneByName(sceneToUnload).isLoaded)
+            {
+                // Unload the scene additively on the server only
+                SceneManager.UnloadSceneAsync(sceneToUnload,
+                        UnityEngine.SceneManagement.UnloadSceneOptions.UnloadAllEmbeddedSceneObjects).completed +=
+                    asyncOperation => { Debug.Log($"Scene {sceneToUnload} has been unloaded on the server."); };
+            }
+        }
+    }
+
+    public void UnloadLevelFromClient(string sceneToUnload)
+    {
+        if (isClient)
+        {
+            // Check if the scene is loaded additively
+            if (SceneManager.GetSceneByName(sceneToUnload).isLoaded &&
+                SceneManager.GetSceneByName(sceneToUnload).isLoaded &&
+                SceneManager.GetSceneByName(sceneToUnload).isLoaded)
+            {
+                // Unload the scene additively on the server only
+                SceneManager.UnloadSceneAsync(sceneToUnload,
+                        UnityEngine.SceneManagement.UnloadSceneOptions.UnloadAllEmbeddedSceneObjects).completed +=
+                    asyncOperation => { Debug.Log($"Scene {sceneToUnload} has been unloaded on the server."); };
+            }
         }
     }
 
     #endregion
-
 
     #region SinglePlayer Stuff
 
@@ -305,9 +204,4 @@ public class SceneLoader : MonoBehaviour
     }
 
     #endregion
-
-    public void ResetProgressAmountToZero()
-    {
-        loadingSceneProgressAmount = 0;
-    }
 }
