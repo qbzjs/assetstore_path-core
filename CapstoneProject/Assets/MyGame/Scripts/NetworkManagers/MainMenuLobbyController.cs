@@ -12,6 +12,7 @@ using TMPro;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 public class MainMenuLobbyController : MonoBehaviour
 {
@@ -193,6 +194,7 @@ public class MainMenuLobbyController : MonoBehaviour
         {
             Debug.Log($"This is the host address for the lobby now : {lobby["HostAddress"]}");
         }
+
         PrisonEscape_NetworkManager.singleton.StartHost();
 
 
@@ -252,62 +254,25 @@ public class MainMenuLobbyController : MonoBehaviour
         if (arg0.lobby == lobbyManager.Lobby)
         {
             RefreshUI();
+            Debug.Log("i am doing something in the lobby data updated but the lobby and my arg is the same thing");
         }
-        else if (arg0.lobby == lobbyManager.Lobby)
+        else
         {
-            lobbyManager.Lobby.Join((result, error) =>
-            {
-                if (result.Response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
-                    RefreshUI();
-                else
-                {
-                    lobbyManager.Lobby.Leave();
-                    lobbyManager.Lobby = default;
-                }
-            });
+            Debug.Log("i am something completely different.");
         }
-        else if (lobbyManager.Lobby.IsSession)
-        {
-            if (LobbyData.SessionLobby(out var session))
-            {
-                if (session != lobbyManager.Lobby)
-                {
-                    session.Leave();
+    }
 
-                    lobbyManager.Lobby.Join((result, error) =>
-                    {
-                        if (result.Response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
-                        {
-                            RefreshUI();
-                        }
-                        else
-                        {
-                            lobbyManager.Lobby.Leave();
-                        }
-                    });
-                }
-            }
-            else
-            {
-                lobbyManager.Lobby.Join((result, error) =>
-                {
-                    if (result.Response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
-                    {
-                        RefreshUI();
-                    }
-                    else
-                    {
-                        lobbyManager.Lobby.Leave();
-                    }
-                });
-            }
-        }
+    public void LoadSinglePlayerGame()
+    {
+        PrisonEscape_NetworkManager.singleton.StartHost();
+        SceneManager.LoadSceneAsync("Lockwood_Prison_1");
     }
 
     public void HandleLeaveRequest()
     {
-            lobbyManager.Lobby.Leave();
-            lobbyManager.Lobby = default;
+        PrisonEscape_NetworkManager.singleton.StopHost();
+        lobbyManager.Lobby.Leave();
+        lobbyManager.Lobby = default;
     }
 
     public void OnSuccessfulJoinRequest(LobbyData lobbyData)
