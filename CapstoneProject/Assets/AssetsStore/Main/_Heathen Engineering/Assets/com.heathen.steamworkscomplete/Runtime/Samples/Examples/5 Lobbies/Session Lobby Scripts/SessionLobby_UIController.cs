@@ -45,6 +45,10 @@ namespace HeathenEngineering.DEMO
                 //If so update the user about that
                 OnGameCreated(lobbyManager.GameServer);
         }
+        
+        
+        
+        
         /// <summary>
         /// Occurs when we create a lobby ... we know this only happens when we are the lobby "owner"
         /// </summary>
@@ -60,6 +64,9 @@ namespace HeathenEngineering.DEMO
 
             UpdateSlotInfo();
         }
+        
+        
+        
         public void HandleOnMemberLeft(UserLobbyLeaveData lobbyLeaveData)
         {
             Debug.Log($"A user named {lobbyLeaveData.user.Nickname} left the lobby");
@@ -98,6 +105,7 @@ namespace HeathenEngineering.DEMO
             //This will notify all other members on the lobby that the network session is ready to connect to
             lobbyManager.Lobby.SetGameServer();
         }
+        
         /// <summary>
         /// Occurs when the server info has been set on this lobby
         /// </summary>
@@ -122,6 +130,7 @@ namespace HeathenEngineering.DEMO
                 $"Port:{server.port}\n\n" +
                 $"Yes its normal for the IP and Port to be 0 ... this is a P2P session and is assuming your using a Steam based transport which uses the CSteamID as the address";
         }
+        
         /// <summary>
         /// We call this anytime there has been some change to the membership or data of the lobby
         /// </summary>

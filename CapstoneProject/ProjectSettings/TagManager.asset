@@ -3,7 +3,16 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Weapon
+  - Cloth
+  - Elevator
+  - ElevatorButtonOpen
+  - ElevatorNumericButton
+  - ElevatorGoButton
+  - Vehicle
+  - layout
+  - Portal
   layers:
   - Default
   - TransparentFX
@@ -18,8 +27,8 @@ TagManager:
   - FPEPlayer
   - FPEObjectExamination
   - FPEIgnore
-  - 
-  - 
+  - Portal
+  - Player
   - 
   - 
   - 

@@ -1,23 +1,21 @@
-﻿#if !DISABLESTEAMWORKS && HE_SYSCORE && STEAMWORKSNET
-using Steamworks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using HeathenEngineering.SteamworksIntegration;
+using HeathenEngineering.SteamworksIntegration.UI;
+using Steamworks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
-using Mirror;
-
-
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
+using UnityEngine.UI;
+using clientAPI = HeathenEngineering.SteamworksIntegration.API;
 
-namespace HeathenEngineering.SteamworksIntegration.UI
+
+namespace MyGame.Scripts.NetworkManagers
 {
-    public class PartyLobbyControl : MonoBehaviour
+    public class PartyGroupController : MonoBehaviour
     {
         [Header("Local User Features")] public GameObject userOwnerPip;
         public Button readyButton;
@@ -46,12 +44,19 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 
         public bool IsPlayerReady
         {
-            get => API.Matchmaking.Client.GetLobbyMemberData(Lobby, API.User.Client.Id, LobbyData.DataReady) == "true";
-            set => API.Matchmaking.Client.SetLobbyMemberData(Lobby, LobbyData.DataReady, value.ToString().ToLower());
+            get => clientAPI.Matchmaking.Client.GetLobbyMemberData(Lobby, clientAPI.User.Client.Id, LobbyData.DataReady) ==
+                   "true";
+            set => clientAPI.Matchmaking.Client.SetLobbyMemberData(Lobby, LobbyData.DataReady, value.ToString().ToLower());
         }
 
         private readonly List<IChatMessage> chatMessages = new List<IChatMessage>();
         private LobbyData loadingLobbyData;
+
+        // Start is called before the first frame update
+        void Awake()
+        {
+            PrisonEscape_NetworkManager.singleton.StartHost();
+        }
 
         private void Start()
         {
@@ -65,39 +70,39 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 
             leaveButton.onClick.AddListener(HandleLeaveClicked);
 
-            var group = API.Matchmaking.Client.memberOfLobbies.FirstOrDefault(p => p.IsGroup);
+            var group = clientAPI.Matchmaking.Client.memberOfLobbies.FirstOrDefault(p => p.IsGroup);
             if (group.IsValid)
             {
                 Lobby = group;
             }
 
-            API.Overlay.Client.EventGameLobbyJoinRequested.AddListener(HandleLobbyJoinRequest);
-            API.Matchmaking.Client.EventLobbyChatMsg.AddListener(HandleChatMessage);
-            API.Matchmaking.Client.EventLobbyEnterSuccess.AddListener(HandleLobbyEnterSuccess);
-            API.Matchmaking.Client.EventLobbyAskedToLeave.AddListener(HandleLobbyKickRequest);
-            API.Matchmaking.Client.EventLobbyDataUpdate.AddListener(HandleLobbyDataUpdated);
-            API.Matchmaking.Client.EventLobbyChatUpdate.AddListener(HandleChatUpdate);
+            clientAPI.Overlay.Client.EventGameLobbyJoinRequested.AddListener(HandleLobbyJoinRequest);
+            clientAPI.Matchmaking.Client.EventLobbyChatMsg.AddListener(HandleChatMessage);
+            clientAPI.Matchmaking.Client.EventLobbyEnterSuccess.AddListener(HandleLobbyEnterSuccess);
+            clientAPI.Matchmaking.Client.EventLobbyAskedToLeave.AddListener(HandleLobbyKickRequest);
+            clientAPI.Matchmaking.Client.EventLobbyDataUpdate.AddListener(HandleLobbyDataUpdated);
+            clientAPI.Matchmaking.Client.EventLobbyChatUpdate.AddListener(HandleChatUpdate);
 
-            if (API.App.Initialized)
+            if (clientAPI.App.Initialized)
                 RefreshUI();
             else
-                API.App.evtSteamInitialized.AddListener(HandleSteamInitalization);
+                clientAPI.App.evtSteamInitialized.AddListener(HandleSteamInitalization);
         }
 
         private void HandleSteamInitalization()
         {
             RefreshUI();
-            API.App.evtSteamInitialized.RemoveListener(HandleSteamInitalization);
+            clientAPI.App.evtSteamInitialized.RemoveListener(HandleSteamInitalization);
         }
 
         private void OnDestroy()
         {
-            API.Overlay.Client.EventGameLobbyJoinRequested.RemoveListener(HandleLobbyJoinRequest);
-            API.Matchmaking.Client.EventLobbyChatMsg.RemoveListener(HandleChatMessage);
-            API.Matchmaking.Client.EventLobbyEnterSuccess.RemoveListener(HandleLobbyEnterSuccess);
-            API.Matchmaking.Client.EventLobbyAskedToLeave.RemoveListener(HandleLobbyKickRequest);
-            API.Matchmaking.Client.EventLobbyDataUpdate.RemoveListener(HandleLobbyDataUpdated);
-            API.Matchmaking.Client.EventLobbyChatUpdate.RemoveListener(HandleChatUpdate);
+            clientAPI.Overlay.Client.EventGameLobbyJoinRequested.RemoveListener(HandleLobbyJoinRequest);
+            clientAPI.Matchmaking.Client.EventLobbyChatMsg.RemoveListener(HandleChatMessage);
+            clientAPI.Matchmaking.Client.EventLobbyEnterSuccess.RemoveListener(HandleLobbyEnterSuccess);
+            clientAPI.Matchmaking.Client.EventLobbyAskedToLeave.RemoveListener(HandleLobbyKickRequest);
+            clientAPI.Matchmaking.Client.EventLobbyDataUpdate.RemoveListener(HandleLobbyDataUpdated);
+            clientAPI.Matchmaking.Client.EventLobbyChatUpdate.RemoveListener(HandleChatUpdate);
         }
 
         private void Update()
@@ -141,13 +146,14 @@ namespace HeathenEngineering.SteamworksIntegration.UI
             }
         }
 
+
         private void HandleChatUpdate(LobbyChatUpdate_t arg0)
         {
             if (arg0.m_ulSteamIDLobby == Lobby)
             {
                 var state = (EChatMemberStateChange)arg0.m_rgfChatMemberStateChange;
                 if (state == EChatMemberStateChange.k_EChatMemberStateChangeEntered)
-                    API.Friends.Client.SetPlayedWith(arg0.m_ulSteamIDUserChanged);
+                    clientAPI.Friends.Client.SetPlayedWith(arg0.m_ulSteamIDUserChanged);
 
                 RefreshUI();
             }
@@ -185,6 +191,7 @@ namespace HeathenEngineering.SteamworksIntegration.UI
             IsPlayerReady = true;
             RefreshUI();
         }
+
 
         private void HandleLobbyDataUpdated(LobbyDataUpdateEventData arg0)
         {
@@ -258,7 +265,7 @@ namespace HeathenEngineering.SteamworksIntegration.UI
         {
             if (!HasLobby)
             {
-                API.Matchmaking.Client.CreateLobby(ELobbyType.k_ELobbyTypePublic, slots.Length + 1,
+                clientAPI.Matchmaking.Client.CreateLobby(ELobbyType.k_ELobbyTypePublic, slots.Length + 1,
                     (result, lobby, error) =>
                     {
                         if (result == EResult.k_EResultOK && !error)
@@ -287,28 +294,27 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 
         private void HandleLobbyJoinRequest(LobbyData lobby, UserData user)
         {
-            API.Matchmaking.Client.RequestLobbyData(lobby);
+            clientAPI.Matchmaking.Client.RequestLobbyData(lobby);
 
             Debug.Log("Lobby data requested successfully.");
             // Join the lobby here
 
-            API.Matchmaking.Client.JoinLobby(lobby, (lobbyenter, success) =>
-            {
-                if (success)
-                {
-                    string connectionData = lobby["connectionData"];
-                    Debug.Log(connectionData);
-                    Debug.Log("Joined lobby successfully1231313131313133333333333333333333333.");
-                    Uri newserver = new Uri(connectionData);
-                    NetworkManager.singleton.StartClient(newserver);
-                    NetworkManager.singleton.StopServer();
-                    RefreshUI();
-                }
-                else
-                {
-                    Debug.Log("Failed to join lobby.");
-                }
-            });
+            // clientAPI.Matchmaking.Client.JoinLobby(lobby, (lobbyenter, success) =>
+            // {
+            //     if (success)
+            //     {
+            //         Debug.Log(lobby["connectionData"]);
+            //         Debug.Log("Joined lobby successfully.");
+            //         Uri newserver = new Uri(lobby["connectionData"]);
+            //         PrisonEscape_NetworkManager.singleton.networkAddress = lobby;
+            //         PrisonEscape_NetworkManager.singleton.StartClient(newserver);
+            //         RefreshUI();
+            //     }
+            //     else
+            //     {
+            //         Debug.Log("Failed to join lobby.");
+            //     }
+            // });
         }
 
         private void HandleLobbyEnterSuccess(LobbyEnter_t arg0)
@@ -318,22 +324,28 @@ namespace HeathenEngineering.SteamworksIntegration.UI
             if (nLobby.IsGroup)
             {
                 Lobby = nLobby;
-                API.Matchmaking.Client.JoinLobby(nLobby, (lobbyenter, sucess) =>
+                
+                clientAPI.Matchmaking.Client.JoinLobby(nLobby, (lobbyenter, success) =>
                 {
-                    if (sucess)
+                    if (success)
                     {
-                        Debug.Log("someone accepted the invite.");
-                        string connectionData = Lobby["connectionData"];
-                        Debug.Log(connectionData);
+                        Debug.Log(nLobby["connectionData"]);
                         Debug.Log("Joined lobby successfully.");
-                        Uri newserver = new Uri(connectionData);
-                        NetworkManager.singleton.StartClient(newserver);
+                        Uri newserver = new Uri(nLobby["connectionData"]);
+                        PrisonEscape_NetworkManager.singleton.StartClient(newserver);
+
                         RefreshUI();
                     }
+                    else
+                    {
+                        Debug.Log("Failed to join lobby.");
+                    }
                 });
+                
+                
             }
         }
-        
+
         private void HandleChatMessage(LobbyChatMsg message)
         {
             if (message.lobby == Lobby)
@@ -343,7 +355,7 @@ namespace HeathenEngineering.SteamworksIntegration.UI
                     if (ulong.TryParse(message.Message.Substring(11), out ulong steamID))
                     {
                         loadingLobbyData = steamID;
-                        API.Matchmaking.Client.RequestLobbyData(loadingLobbyData);
+                        clientAPI.Matchmaking.Client.RequestLobbyData(loadingLobbyData);
                     }
                 }
                 else
@@ -475,4 +487,3 @@ namespace HeathenEngineering.SteamworksIntegration.UI
         }
     }
 }
-#endif
