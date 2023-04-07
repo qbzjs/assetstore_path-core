@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using HeathenEngineering.SteamworksIntegration;
 using HeathenEngineering.SteamworksIntegration.UI;
+using Michsky.UI.Dark;
+using Mirror;
 using MyGame.Scripts.NetworkManagers;
 using Steamworks;
 using UnityEngine;
 using clientAPI = HeathenEngineering.SteamworksIntegration.API;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
@@ -18,12 +21,31 @@ public class MainMenuLobbyController : MonoBehaviour
 {
     public LobbyManager lobbyManager;
     public LobbyMemberSlot[] slots;
+    [SerializeField] private MainPanelManager _mainPanelManager;
 
+    
     //Local user things
     [Header("Local User Features")] public GameObject userOwnerPip;
-    public Button readyButton;
-    public Button notReadyButton;
     public Button leaveButton;
+
+    public Color ReadyColour;
+    public Color UnreadyColour;
+    public Color StandardColour;
+
+    public bool firstTime = false;
+
+    public Image ReadyUnreadyButtonImage;
+    public TextMeshProUGUI readyUnreadyButtonTextNormal;
+    public TextMeshProUGUI readyUnreadyButtonTextHighlighted;
+
+    public Button SinglePlayerButton;
+
+    public GameObject ShowLobbyMainMenuButton;
+    public GameObject CreateNewLobbyMainMenuButton;
+
+    public Image StartGameBackGroundImage;
+    public TextMeshProUGUI StartGameNormalText;
+    public TextMeshProUGUI StartGameHighlightedText;
 
     [Header("Configuration")] public RectTransform invitePanel;
     public FriendInviteDropDown inviteDropdown;
@@ -38,7 +60,7 @@ public class MainMenuLobbyController : MonoBehaviour
     public GameObject theirChatTemplate;
 
     private readonly List<IChatMessage> chatMessages = new List<IChatMessage>();
-
+    private LobbyData loadingLobbyData;
 
     private void Start()
     {
@@ -90,9 +112,26 @@ public class MainMenuLobbyController : MonoBehaviour
     public void HandleLobbyJoinRequest(LobbyData lobby, UserData userData)
     {
         clientAPI.Matchmaking.Client.RequestLobbyData(lobby);
-        //   Debug.Log("I have been called because someone is requesting to join. - \nthe user is : " + user.Name);
+        //leave your server and client if you have them before you connect to the new player.
+        if (NetworkManager.singleton.isNetworkActive)
+        {
+            string offlineScene = NetworkManager.singleton.offlineScene;
+            NetworkManager.singleton.offlineScene = "";
+            NetworkManager.singleton.StopHost();
+            NetworkManager.singleton.offlineScene = offlineScene;
+        }
 
+
+        //leave your lobby before you connect to the new player
+        if (lobbyManager.HasLobby)
+        {
+            lobbyManager.Lobby.Leave();
+        }
+
+        Debug.Log("I have been called because someone is requesting to join. - \nthe user is : " + userData.Name);
         Debug.Log("Lobby data requested successfully.");
+        Debug.Log($"This is the person i am joining steam cid : {userData.id}");
+
         // Join the lobby here
         lobbyManager.Join(lobby);
         RefreshUI();
@@ -175,6 +214,7 @@ public class MainMenuLobbyController : MonoBehaviour
     public void HandleInvitedUser(UserData userData)
     {
         lobbyManager.Lobby.InviteUserToLobby(userData);
+        RefreshUI();
     }
 
     public void OnJoinedALobby()
@@ -189,15 +229,25 @@ public class MainMenuLobbyController : MonoBehaviour
 
     public void OnLobbyCreated(LobbyData lobby)
     {
-        lobbyManager.SetLobbyData("HostAddress", SteamUser.GetSteamID().ToString());
-        if (lobby["HostAddress"] != null)
-        {
-            Debug.Log($"This is the host address for the lobby now : {lobby["HostAddress"]}");
-        }
+        //   lobbyManager.SetLobbyData("HostAddress", SteamUser.GetSteamID().ToString());
+        // if (lobbyManager["HostAddress"] != null)
+        //{
+        //     Debug.Log($"This is the host address for the lobby now : {lobbyManager["HostAddress"]}");
+        //   Debug.Log($"This is my own csteamid when i started the lobby: {SteamUser.GetSteamID().ToString()}");
+        // }
+        CreateNewLobbyMainMenuButton.SetActive(false);
+        ShowLobbyMainMenuButton.SetActive(true);
+        SinglePlayerButton.gameObject.SetActive(false);
 
-        PrisonEscape_NetworkManager.singleton.StartHost();
+        firstTime = false;
+        readyUnreadyButtonTextHighlighted.text = "READY";
+        readyUnreadyButtonTextNormal.text = "READY";
+        ReadyUnreadyButtonImage.color = StandardColour;
 
+        lobbyManager.Lobby.SetGameServer(SteamUser.GetSteamID());
+        NetworkManager.singleton.StartHost();
 
+        //here also show in the main menu the "Show lobby button now instead"
         RefreshUI();
     }
 
@@ -210,6 +260,11 @@ public class MainMenuLobbyController : MonoBehaviour
     //Occurs when the player clicks the ready or wait button
     public void HandleReady()
     {
+        if (!firstTime)
+        {
+            firstTime = true;
+        }
+
         lobbyManager.IsPlayerReady = !lobbyManager.IsPlayerReady;
         RefreshUI();
     }
@@ -225,12 +280,19 @@ public class MainMenuLobbyController : MonoBehaviour
         if (!lobbyManager.Lobby.AllPlayersReady)
         {
             Debug.Log($"You chose to start the session before all players where marked ready");
+            return;
         }
 
-        //this is the last thing to call at start game.
-        lobbyManager.Lobby.SetGameServer();
-
-        PrisonEscape_NetworkManager.singleton.ServerChangeScene("Lockwood_Prison_1");
+        //Make sure we are the player and not someone else in the lobby.
+        if (lobbyManager.IsPlayerOwner)
+        {
+            NetworkManager.singleton.ServerChangeScene("Lockwood_Prison_1");
+        }
+        else
+        {
+            Debug.Log(
+                "Unfortunately only the host of the server and lobby can start the game when all players are ready.");
+        }
     }
 
 
@@ -239,6 +301,7 @@ public class MainMenuLobbyController : MonoBehaviour
     {
         if (lobbyManager.Lobby.IsOwner)
         {
+            Debug.Log("Currently i have set the server game info after creating the server.");
             return;
         }
     }
@@ -256,32 +319,121 @@ public class MainMenuLobbyController : MonoBehaviour
             RefreshUI();
             Debug.Log("i am doing something in the lobby data updated but the lobby and my arg is the same thing");
         }
-        else
+
+        else if (arg0.lobby == loadingLobbyData)
         {
-            Debug.Log("i am something completely different.");
+            Debug.Log("lord have mercy");
+            if (loadingLobbyData.IsGroup)
+            {
+                if (lobbyManager.HasLobby && lobbyManager.Lobby != loadingLobbyData)
+                {
+                    lobbyManager.Lobby.Leave();
+                }
+
+                lobbyManager.Lobby = loadingLobbyData;
+                loadingLobbyData.Join((result, error) =>
+                {
+                    if (result.Response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
+                        RefreshUI();
+                    else
+                    {
+                        loadingLobbyData.Leave();
+                        lobbyManager.Lobby = default;
+                    }
+                });
+            }
+            else if (loadingLobbyData.IsSession)
+            {
+                if (LobbyData.SessionLobby(out var session))
+                {
+                    if (session != loadingLobbyData)
+                    {
+                        session.Leave();
+
+                        loadingLobbyData.Join((result, error) =>
+                        {
+                            if (result.Response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
+                            {
+                                RefreshUI();
+                            }
+                            else
+                            {
+                                loadingLobbyData.Leave();
+                            }
+                        });
+                    }
+                }
+                else
+                {
+                    loadingLobbyData.Join((result, error) =>
+                    {
+                        if (result.Response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
+                        {
+                            RefreshUI();
+                        }
+                        else
+                        {
+                            loadingLobbyData.Leave();
+                        }
+                    });
+                }
+            }
+
+            loadingLobbyData = default;
         }
     }
 
     public void LoadSinglePlayerGame()
     {
-        PrisonEscape_NetworkManager.singleton.StartHost();
+        //NetworkManager.singleton.StartHost();
         SceneManager.LoadSceneAsync("Lockwood_Prison_1");
     }
 
     public void HandleLeaveRequest()
     {
-        PrisonEscape_NetworkManager.singleton.StopHost();
+        CreateNewLobbyMainMenuButton.SetActive(true);
+        ShowLobbyMainMenuButton.SetActive(false);
+        SinglePlayerButton.gameObject.SetActive(true);
+        _mainPanelManager.PanelAnim(0);
+
+
+        if (NetworkManager.singleton.offlineScene != null || NetworkManager.singleton.offlineScene.Length > 0)
+        {
+            String offlineSceneTemp = NetworkManager.singleton.offlineScene;
+            NetworkManager.singleton.offlineScene = "";
+            NetworkManager.singleton.StopHost();
+            NetworkManager.singleton.offlineScene = offlineSceneTemp;
+        }
+
+        firstTime = false;
+        readyUnreadyButtonTextHighlighted.text = "READY";
+        readyUnreadyButtonTextNormal.text = "READY";
+        ReadyUnreadyButtonImage.color = StandardColour;
+
         lobbyManager.Lobby.Leave();
         lobbyManager.Lobby = default;
+        RefreshUI();
     }
 
     public void OnSuccessfulJoinRequest(LobbyData lobbyData)
     {
-        Debug.Log("someone joined me and i am now here.");
-        string ServerLobbyAddress = lobbyData["HostAddress"];
-        Debug.Log($"the lobby address theyre connecting to is : {ServerLobbyAddress}.");
-        PrisonEscape_NetworkManager.singleton.networkAddress = ServerLobbyAddress;
-        PrisonEscape_NetworkManager.singleton.StartClient();
+        NetworkManager.singleton.networkAddress = lobbyManager.Lobby.GameServer.id.ToString();
+        NetworkManager.singleton.StartClient();
+
+        _mainPanelManager.PanelAnim(2);
+        CreateNewLobbyMainMenuButton.SetActive(false);
+        ShowLobbyMainMenuButton.SetActive(true);
+        SinglePlayerButton.gameObject.SetActive(false);
+
+        firstTime = false;
+        readyUnreadyButtonTextHighlighted.text = "READY";
+        readyUnreadyButtonTextNormal.text = "READY";
+        ReadyUnreadyButtonImage.color = StandardColour;
+
+        //here also show in the main menu the "Show lobby button now instead".
+        RefreshUI();
+        Debug.Log(
+            $"the current prison networkaddress after the start client and networkaddress : {NetworkManager.singleton.networkAddress}");
     }
 
 
@@ -304,12 +456,6 @@ public class MainMenuLobbyController : MonoBehaviour
 
             userOwnerPip.SetActive(false);
 
-            if (readyButton != null)
-                readyButton.gameObject.SetActive(false);
-
-            if (notReadyButton != null)
-                notReadyButton.gameObject.SetActive(false);
-
             leaveButton.gameObject.SetActive(false);
             chatPanel.SetActive(false);
         }
@@ -321,14 +467,53 @@ public class MainMenuLobbyController : MonoBehaviour
                 UserData.SetRichPresence("steam_player_group_size", lobbyManager.Members.Length.ToString());
             }
 
+            if (lobbyManager.IsPlayerReady)
+            {
+                readyUnreadyButtonTextNormal.text = "NOT READY";
+                readyUnreadyButtonTextHighlighted.text = "NOT READY";
+                ReadyUnreadyButtonImage.color = UnreadyColour;
+            }
+            else if (!lobbyManager.IsPlayerReady && !firstTime)
+            {
+                readyUnreadyButtonTextNormal.text = "READY";
+                readyUnreadyButtonTextHighlighted.text = "READY";
+                ReadyUnreadyButtonImage.color = ReadyColour;
+            }
+
+
+            if (lobbyManager.IsPlayerOwner)
+            {
+                //Set the colour of the background image to bright since we are the host.
+                var color = StartGameBackGroundImage.color;
+                color.a = 1;
+                StartGameBackGroundImage.color = color;
+
+                var color1 = StartGameNormalText.color;
+                color1.a = 1;
+                StartGameNormalText.color = color1;
+
+                var color2 = StartGameHighlightedText.color;
+                color2.a = 1;
+                StartGameHighlightedText.color = color2;
+            }
+            else
+            {
+                //Set the colour of the background image to half transparent as we are the client..
+                var color = StartGameBackGroundImage.color;
+                color.a = 0.55f;
+                StartGameBackGroundImage.color = color;
+
+                var color1 = StartGameNormalText.color;
+                color1.a = 0.55f;
+                StartGameNormalText.color = color1;
+
+                var color2 = StartGameHighlightedText.color;
+                color2.a = 0.55f;
+                StartGameHighlightedText.color = color2;
+            }
+
             leaveButton.gameObject.SetActive(true);
             userOwnerPip.SetActive(lobbyManager.IsPlayerOwner);
-
-            if (readyButton != null)
-                readyButton.gameObject.SetActive(!lobbyManager.IsPlayerReady);
-
-            if (notReadyButton != null)
-                notReadyButton.gameObject.SetActive(lobbyManager.IsPlayerReady);
 
             var members = lobbyManager.Lobby.Members;
             if (members.Length > 1)

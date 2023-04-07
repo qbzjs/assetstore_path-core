@@ -8,9 +8,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Mirror;
-
-
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -19,17 +16,20 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 {
     public class PartyLobbyControl : MonoBehaviour
     {
-        [Header("Local User Features")] public GameObject userOwnerPip;
+        [Header("Local User Features")]
+        public GameObject userOwnerPip;
         public Button readyButton;
         public Button notReadyButton;
         public Button leaveButton;
 
-        [Header("Configuration")] public RectTransform invitePanel;
+        [Header("Configuration")]
+        public RectTransform invitePanel;
         public FriendInviteDropDown inviteDropdown;
         public LobbyMemberSlot[] slots;
         public bool updateRichPresenceGroupData = true;
 
-        [Header("Chat")] public int maxMessages = 200;
+        [Header("Chat")]
+        public int maxMessages = 200;
         public GameObject chatPanel;
         public TMP_InputField inputField;
         public ScrollRect scrollView;
@@ -37,13 +37,17 @@ namespace HeathenEngineering.SteamworksIntegration.UI
         public GameObject myChatTemplate;
         public GameObject theirChatTemplate;
 
-        [Header("Events")] public LobbyDataEvent evtSessionLobbyInvite;
+        [Header("Events")]
+        public LobbyDataEvent evtSessionLobbyInvite;
 
-        public LobbyData Lobby { get; set; }
+        public LobbyData Lobby
+        {
+            get;
+            set;
+        }
         public bool HasLobby => Lobby != CSteamID.Nil.m_SteamID && SteamMatchmaking.GetNumLobbyMembers(Lobby) > 0;
         public bool IsPlayerOwner => Lobby.IsOwner;
         public bool AllPlayersReady => Lobby.AllPlayersReady;
-
         public bool IsPlayerReady
         {
             get => API.Matchmaking.Client.GetLobbyMemberData(Lobby, API.User.Client.Id, LobbyData.DataReady) == "true";
@@ -56,10 +60,10 @@ namespace HeathenEngineering.SteamworksIntegration.UI
         private void Start()
         {
             inviteDropdown.Invited.AddListener(HandleInvitedUser);
-
+            
             if (readyButton != null)
                 readyButton.onClick.AddListener(HandleReadyClicked);
-
+            
             if (notReadyButton != null)
                 notReadyButton.onClick.AddListener(HandleNotReadyClicked);
 
@@ -67,9 +71,7 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 
             var group = API.Matchmaking.Client.memberOfLobbies.FirstOrDefault(p => p.IsGroup);
             if (group.IsValid)
-            {
                 Lobby = group;
-            }
 
             API.Overlay.Client.EventGameLobbyJoinRequested.AddListener(HandleLobbyJoinRequest);
             API.Matchmaking.Client.EventLobbyChatMsg.AddListener(HandleChatMessage);
@@ -105,18 +107,17 @@ namespace HeathenEngineering.SteamworksIntegration.UI
             if (invitePanel.gameObject.activeSelf
                 && !inviteDropdown.IsExpanded
                 && ((
-#if ENABLE_INPUT_SYSTEM
-                        Mouse.current.leftButton.wasPressedThisFrame
-                        && !RectTransformUtility.RectangleContainsScreenPoint(invitePanel,
-                            Mouse.current.position.ReadValue())
+#if ENABLE_INPUT_SYSTEM   
+                Mouse.current.leftButton.wasPressedThisFrame
+                && !RectTransformUtility.RectangleContainsScreenPoint(invitePanel, Mouse.current.position.ReadValue())
 #else
                 Input.GetMouseButtonDown(0)
                 && !RectTransformUtility.RectangleContainsScreenPoint(invitePanel, Input.mousePosition)
 #endif
-                    )
-                    ||
+                )
+                ||
 #if ENABLE_INPUT_SYSTEM
-                    Keyboard.current.escapeKey.wasPressedThisFrame
+                Keyboard.current.escapeKey.wasPressedThisFrame
 #else
                 Input.GetKeyDown(KeyCode.Escape)
 #endif
@@ -130,12 +131,12 @@ namespace HeathenEngineering.SteamworksIntegration.UI
             if (EventSystem.current.currentSelectedGameObject == inputField.gameObject
 #if ENABLE_INPUT_SYSTEM
                 && (Keyboard.current.enterKey.wasPressedThisFrame
-                    || Keyboard.current.numpadEnterKey.wasPressedThisFrame)
+                || Keyboard.current.numpadEnterKey.wasPressedThisFrame)
 #else
                 && (Input.GetKeyDown(KeyCode.Return)
                     || Input.GetKeyDown(KeyCode.KeypadEnter))
 #endif
-               )
+                )
             {
                 OnSendChatMessage();
             }
@@ -155,7 +156,7 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 
         private void OnSendChatMessage()
         {
-            if (HasLobby
+            if(HasLobby
                 && !string.IsNullOrEmpty(inputField.text))
             {
                 Lobby.SendChatMessage(inputField.text);
@@ -188,7 +189,7 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 
         private void HandleLobbyDataUpdated(LobbyDataUpdateEventData arg0)
         {
-            if (arg0.lobby == Lobby)
+            if(arg0.lobby == Lobby)
                 RefreshUI();
             else if (arg0.lobby == loadingLobbyData)
             {
@@ -215,7 +216,7 @@ namespace HeathenEngineering.SteamworksIntegration.UI
                 {
                     if (LobbyData.SessionLobby(out var session))
                     {
-                        if (session != loadingLobbyData)
+                        if(session != loadingLobbyData)
                         {
                             session.Leave();
 
@@ -249,25 +250,23 @@ namespace HeathenEngineering.SteamworksIntegration.UI
                         });
                     }
                 }
-
                 loadingLobbyData = default;
             }
         }
 
         private void HandleInvitedUser(UserData arg0)
         {
-            if (!HasLobby)
+            if(!HasLobby)
             {
-                API.Matchmaking.Client.CreateLobby(ELobbyType.k_ELobbyTypePublic, slots.Length + 1,
-                    (result, lobby, error) =>
+                API.Matchmaking.Client.CreateLobby(ELobbyType.k_ELobbyTypeInvisible, slots.Length + 1, (result, lobby, error) =>
+                {
+                    if(result == EResult.k_EResultOK && !error)
                     {
-                        if (result == EResult.k_EResultOK && !error)
-                        {
-                            lobby.IsGroup = true;
-                            Lobby = lobby;
-                            Lobby.InviteUserToLobby(arg0);
-                        }
-                    });
+                        lobby.IsGroup = true;
+                        Lobby = lobby;
+                        Lobby.InviteUserToLobby(arg0);
+                    }
+                });
             }
             else
             {
@@ -277,7 +276,7 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 
         private void HandleLobbyKickRequest(LobbyData arg0)
         {
-            if (arg0 == Lobby)
+            if(arg0 == Lobby)
             {
                 Lobby.Leave();
                 Lobby = default;
@@ -288,59 +287,25 @@ namespace HeathenEngineering.SteamworksIntegration.UI
         private void HandleLobbyJoinRequest(LobbyData lobby, UserData user)
         {
             API.Matchmaking.Client.RequestLobbyData(lobby);
-
-            Debug.Log("Lobby data requested successfully.");
-            // Join the lobby here
-
-            API.Matchmaking.Client.JoinLobby(lobby, (lobbyenter, success) =>
-            {
-                if (success)
-                {
-                    string connectionData = lobby["connectionData"];
-                    Debug.Log(connectionData);
-                    Debug.Log("Joined lobby successfully1231313131313133333333333333333333333.");
-                    Uri newserver = new Uri(connectionData);
-                    NetworkManager.singleton.StartClient(newserver);
-                    NetworkManager.singleton.StopServer();
-                    RefreshUI();
-                }
-                else
-                {
-                    Debug.Log("Failed to join lobby.");
-                }
-            });
         }
 
         private void HandleLobbyEnterSuccess(LobbyEnter_t arg0)
         {
             LobbyData nLobby = arg0.m_ulSteamIDLobby;
-
             if (nLobby.IsGroup)
             {
                 Lobby = nLobby;
-                API.Matchmaking.Client.JoinLobby(nLobby, (lobbyenter, sucess) =>
-                {
-                    if (sucess)
-                    {
-                        Debug.Log("someone accepted the invite.");
-                        string connectionData = Lobby["connectionData"];
-                        Debug.Log(connectionData);
-                        Debug.Log("Joined lobby successfully.");
-                        Uri newserver = new Uri(connectionData);
-                        NetworkManager.singleton.StartClient(newserver);
-                        RefreshUI();
-                    }
-                });
+                RefreshUI();
             }
         }
-        
+
         private void HandleChatMessage(LobbyChatMsg message)
         {
             if (message.lobby == Lobby)
             {
                 if (message.Message.StartsWith("[SessionId]"))
                 {
-                    if (ulong.TryParse(message.Message.Substring(11), out ulong steamID))
+                    if(ulong.TryParse(message.Message.Substring(11), out ulong steamID))
                     {
                         loadingLobbyData = steamID;
                         API.Matchmaking.Client.RequestLobbyData(loadingLobbyData);
@@ -395,7 +360,6 @@ namespace HeathenEngineering.SteamworksIntegration.UI
             yield return new WaitForEndOfFrame();
             inputField.Select();
         }
-
         /// <summary>
         /// Called when a new chat message is added to the UI to force the system to scroll to the bottom
         /// </summary>
@@ -428,10 +392,10 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 
                 if (readyButton != null)
                     readyButton.gameObject.SetActive(false);
-
+                
                 if (notReadyButton != null)
                     notReadyButton.gameObject.SetActive(false);
-
+                
                 leaveButton.gameObject.SetActive(false);
                 chatPanel.SetActive(false);
             }
@@ -445,10 +409,10 @@ namespace HeathenEngineering.SteamworksIntegration.UI
 
                 leaveButton.gameObject.SetActive(true);
                 userOwnerPip.SetActive(IsPlayerOwner);
-
+                
                 if (readyButton != null)
                     readyButton.gameObject.SetActive(!IsPlayerReady);
-
+                
                 if (notReadyButton != null)
                     notReadyButton.gameObject.SetActive(IsPlayerReady);
 

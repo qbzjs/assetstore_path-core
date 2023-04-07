@@ -331,7 +331,6 @@ namespace HeathenEngineering.SteamworksIntegration
             createArguments.metadata.Clear();
             createArguments.metadata.AddRange(metadata);
             Create(null);
-            
         }
         public void Create(ELobbyType type, int slots, params MetadataTempalate[] metadata)
         {

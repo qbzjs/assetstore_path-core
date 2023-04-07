@@ -10,7 +10,7 @@ public class PrisonSceneManager : MonoBehaviour
 
 
     // Start is called before the first frame update
-    void Awake()
+    void Start()
     {
         NetworkStartPosition[] spawnPoints = FindObjectsOfType<NetworkStartPosition>();
         for (int i = 0; i < NetworkServer.connections.Count; i++)

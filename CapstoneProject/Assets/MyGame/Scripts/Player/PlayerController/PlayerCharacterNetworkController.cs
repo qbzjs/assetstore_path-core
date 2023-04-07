@@ -24,20 +24,17 @@ namespace MyGame.Scripts.Player.PlayerController
     
         private void ServerScaleChanged(Vector3 oldValue, Vector3 newValue)
         {
-            Debug.Log("i am the server and have allowed this change of : scale \nthe old position value: " + oldValue +
-                      " the new poisition value: " + newValue);
+        
         }
 
         private void ServerRotationChanged(Quaternion oldValue, Quaternion newValue)
         {
-            //Debug.Log("i am the server and have allowed this change of : rotation \nthe old position value: " + oldValue +
-            //        " the new poisition value: " + newValue);
+         
         }
 
         private void ServerPositionChanged(Vector3 oldValue, Vector3 newValue)
         {
-            //Debug.Log("i am the server and have allowed this change of : movement\nthe old position value: " + oldValue +
-            //      " the new poisition value: " + newValue);
+         
         }
 
         #region Commands
@@ -68,7 +65,6 @@ namespace MyGame.Scripts.Player.PlayerController
                 Motor.SetRotation(newRotation, false);
                 MeshRoot.localScale = newScale;
 
-                Debug.Log("Updated the players position,rotation and scale on the server.");
             }
         }
 
