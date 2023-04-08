@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using MHLab.Patch.Core.Serializing;
 
 namespace MHLab.Patch.Utilities.Serializing

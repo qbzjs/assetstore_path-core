@@ -20,7 +20,7 @@ namespace MHLab.Patch.Admin.Editor.Components.Contents
         private Rect _patchesDescriptionArea;
         private Rect _patchesArea1;
         private Rect _patchesArea2;
-        private int _patchesIndex1;
+        private int _patchesIndex1; 
         private int _patchesIndex2;
 
         private string[] _versions;

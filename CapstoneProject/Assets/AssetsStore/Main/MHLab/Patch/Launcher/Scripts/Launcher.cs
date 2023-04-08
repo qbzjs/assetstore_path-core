@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using MHLab.Patch.Core;
 using MHLab.Patch.Core.Client;
+using MHLab.Patch.Core.Client.Advanced.IO;
+using MHLab.Patch.Core.Client.Advanced.IO.Chunked;
 using MHLab.Patch.Core.Client.IO;
 using MHLab.Patch.Core.IO;
 using MHLab.Patch.Launcher.Scripts.Utilities;
@@ -24,6 +26,8 @@ namespace MHLab.Patch.Launcher.Scripts
                 originalSettings.PatcherUpdaterSafeMode = settingsOverride.PatcherUpdaterSafeMode;
             });
             
+            PlayerPrefs.SetString("GameVersion", context.GetLocalVersion().ToString());
+            context.Downloader                  =  new ChunkedDownloader(context);
             context.Downloader.DownloadComplete += Data.DownloadComplete;
             
             NetworkChecker = new NetworkChecker();
@@ -36,6 +40,7 @@ namespace MHLab.Patch.Launcher.Scripts
 
             context.Runner.PerformedStep += (sender, updater) =>
             {
+              
                 if (context.IsDirty(out var reasons, out var data))
                 {
                     var stringReasons = "";
@@ -173,7 +178,7 @@ namespace MHLab.Patch.Launcher.Scripts
             {
                 var mainError = Context.LocalizedMessages.UpdateUnableToStartTargetApplication;
                 Data.Log(mainError);
-                Context.Logger.Error(e, $"{mainError} - {e.Message}\n{e.StackTrace}");
+                Context.Logger.Info($"{mainError} - {e.Message}\n{e.StackTrace}");
             }
         }
 
@@ -183,7 +188,6 @@ namespace MHLab.Patch.Launcher.Scripts
 
             _alreadyTriggeredGameStart = true;
             var filePath = PathsManager.Combine(Context.Settings.GetGamePath(), Data.GameExecutableName);
-            
             ApplicationStarter.StartApplication(filePath, $"{Context.Settings.LaunchArgumentParameter}={Context.Settings.LaunchArgumentValue}");
             Application.Quit();
         }
@@ -193,20 +197,10 @@ namespace MHLab.Patch.Launcher.Scripts
             GenerateDebugReport("debug_report_launcher.txt");
         }
         
-        private void OnDisable()
+        private void OnDestroy()
         {
             Context.Downloader.Cancel();
             Debug.Log("Download canceled");
-        }
-        
-        public void ResumeDownload()
-        {
-            Context.Downloader.Resume();
-        }
-
-        public void PauseDownload()
-        {
-            Context.Downloader.Pause();
         }
     }
 }

@@ -24,12 +24,12 @@ namespace MHLab.Patch.Utilities
 
             if (handler != null)
             {
-                try
-                {
-                    handler.Invoke(progress);
-                }
-                catch
-                {}
+            	try
+            	{
+	                handler.Invoke(progress);
+	            }
+	            catch
+	            {}
             }
         }
         

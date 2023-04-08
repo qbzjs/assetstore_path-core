@@ -3,6 +3,7 @@ using System.Threading;
 using MHLab.Patch.Core.Client.Progresses;
 using MHLab.Patch.Core.Utilities;
 using MHLab.Patch.Launcher.Scripts.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,17 +18,15 @@ namespace MHLab.Patch.Launcher.Scripts
         public bool LaunchAnywayOnError;
         public bool DebugMode;
         
-        public Dispatcher  Dispatcher;
+        public Dispatcher Dispatcher;
         public ProgressBar ProgressBar;
-        public Text        DownloadSpeed;
-        public Text        ProgressPercentage;
-        public Text        Logs;
-        public Text        ElapsedTime;
-        public Dialog      Dialog;
-        public Text        SizeProgress;
-        public Text        SoftwareVersion;
-        public Button      ResumeButton;
-        public Button      PauseButton;
+        public Text DownloadSpeed;
+        public Text ProgressPercentage;
+        public Text Logs;
+        public Text ElapsedTime;
+        public Dialog Dialog;
+        public Text SizeProgress;
+        public TextMeshProUGUI SoftwareVersion;
         
         public const string WorkspaceFolderName = "PATCHWorkspace";
         

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using MHLab.Patch.Core;
 using MHLab.Patch.Core.Client;
+using MHLab.Patch.Core.Client.Advanced.IO.Chunked;
 using MHLab.Patch.Core.Client.IO;
 using MHLab.Patch.Core.IO;
 using MHLab.Patch.Launcher.Scripts.Utilities;
@@ -23,7 +24,8 @@ namespace MHLab.Patch.Launcher.Scripts
                 originalSettings.DebugMode              = settingsOverride.DebugMode;
                 originalSettings.PatcherUpdaterSafeMode = settingsOverride.PatcherUpdaterSafeMode;
             });
-
+            
+            context.Downloader                  =  new ChunkedDownloader(context);
             context.Downloader.DownloadComplete += Data.DownloadComplete;
             
             NetworkChecker = new NetworkChecker();
@@ -181,22 +183,12 @@ namespace MHLab.Patch.Launcher.Scripts
 
         public void GenerateDebugReport()
         {
-            GenerateDebugReport("debug_report_pregame.txt");
+            GenerateDebugReport("JailhouseFrenzy_LauncherDebugReport.txt");
         }
         
         private void OnDisable()
         {
             Context.Downloader.Cancel();            
-        }
-        
-        public void ResumeDownload()
-        {
-            Context.Downloader.Resume();
-        }
-
-        public void PauseDownload()
-        {
-            Context.Downloader.Pause();
         }
     }
 }

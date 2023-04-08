@@ -53,7 +53,7 @@ namespace MHLab.Patch.Launcher.Scripts
                 originalSettings.PatcherUpdaterSafeMode = settingsOverride.PatcherUpdaterSafeMode;
             });
 
-            context.Downloader.DownloadComplete += Data.DownloadComplete;
+            Context.Downloader.DownloadComplete += Data.DownloadComplete;
 
             NetworkChecker = new NetworkChecker();
 
