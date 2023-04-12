@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using MHLab.Patch.Core;
 using MHLab.Patch.Core.Client;
-using MHLab.Patch.Core.Client.Advanced.IO;
 using MHLab.Patch.Core.Client.Advanced.IO.Chunked;
 using MHLab.Patch.Core.Client.IO;
 using MHLab.Patch.Core.IO;
@@ -25,8 +24,7 @@ namespace MHLab.Patch.Launcher.Scripts
                 originalSettings.DebugMode              = settingsOverride.DebugMode;
                 originalSettings.PatcherUpdaterSafeMode = settingsOverride.PatcherUpdaterSafeMode;
             });
-            
-            PlayerPrefs.SetString("GameVersion", context.GetLocalVersion().ToString());
+
             context.Downloader                  =  new ChunkedDownloader(context);
             context.Downloader.DownloadComplete += Data.DownloadComplete;
             
@@ -40,7 +38,6 @@ namespace MHLab.Patch.Launcher.Scripts
 
             context.Runner.PerformedStep += (sender, updater) =>
             {
-              
                 if (context.IsDirty(out var reasons, out var data))
                 {
                     var stringReasons = "";

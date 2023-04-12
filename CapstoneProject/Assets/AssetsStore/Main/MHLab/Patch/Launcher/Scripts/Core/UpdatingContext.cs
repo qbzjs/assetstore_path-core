@@ -69,14 +69,10 @@ namespace MHLab.Patch.Core.Client
             FileSystem = new FileSystem();
             Runner     = new UpdateRunner();
             Downloader = new FileDownloader(FileSystem);
-            
-            
         }
 
         public void Initialize()
         {
-
-            
             Logger.Info("Update context initializing...");
             Logger.Info($"Software version: {Settings.SoftwareVersion}");
             Logger.Info($"Software tier: {Settings.SoftwareTier}");
@@ -86,6 +82,7 @@ namespace MHLab.Patch.Core.Client
             Logger.Debug("===> Debug Mode: ENABLED <===");
 
             _progress = new UpdateProgress();
+
             SetCurrentVersion();
 
             var cleanedFiles = CleanWorkspace();
@@ -98,9 +95,6 @@ namespace MHLab.Patch.Core.Client
             _progress.TotalSteps = Runner.GetProgressAmount();
             IsInitialized        = true;
             Logger.Info("Update context completed initialization.");
-            
-     
-            
         }
 
         public void FetchIndexes()
@@ -355,7 +349,6 @@ namespace MHLab.Patch.Core.Client
 
         public BuildDefinition GetBuildDefinition(IVersion version)
         {
-            
             var remoteUrl        = Settings.GetRemoteBuildDefinitionUrl(version);
             var partialRemoteUrl = Settings.GetRemoteBuildDefinitionUrl(version);
             if (!string.IsNullOrWhiteSpace(Settings.RemoteUrl))

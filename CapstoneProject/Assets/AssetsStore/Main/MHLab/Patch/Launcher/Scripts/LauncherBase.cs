@@ -64,7 +64,6 @@ namespace MHLab.Patch.Launcher.Scripts
             if (Data.SoftwareVersion != null)
             {
                 Data.SoftwareVersion.text = $"v{settings.SoftwareVersion}";
-                PlayerPrefs.SetString("GameVersion", settings.SoftwareVersion);
             }
 
             Initialize(Context);

@@ -183,7 +183,7 @@ namespace MHLab.Patch.Launcher.Scripts
 
         public void GenerateDebugReport()
         {
-            GenerateDebugReport("JailhouseFrenzy_LauncherDebugReport.txt");
+            GenerateDebugReport("debug_report_pregame.txt");
         }
         
         private void OnDisable()
