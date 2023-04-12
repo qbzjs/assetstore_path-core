@@ -28,16 +28,8 @@ public class MainMenuLobbyController : MonoBehaviour
     [Header("Local User Features")] public GameObject userOwnerPip;
     public Button leaveButton;
 
-    public Color ReadyColour;
-    public Color ReadyColourText;
-    public Color UnreadyColourText;
-    public Color StandardColourText;
-    public Color UnreadyColour;
-    public Color StandardColour;
-
     public bool firstTime = false;
 
-    public Image ReadyUnreadyButtonImage;
     public TextMeshProUGUI readyUnreadyButtonTextNormal;
     public TextMeshProUGUI readyUnreadyButtonTextHighlighted;
 
@@ -123,7 +115,7 @@ public class MainMenuLobbyController : MonoBehaviour
             NetworkManager.singleton.StopHost();
             NetworkManager.singleton.offlineScene = offlineScene;
         }
-        
+
         //leave your lobby before you connect to the new player
         if (lobbyManager.HasLobby)
         {
@@ -244,10 +236,7 @@ public class MainMenuLobbyController : MonoBehaviour
         firstTime = false;
         readyUnreadyButtonTextHighlighted.text = "READY";
         readyUnreadyButtonTextNormal.text = "READY";
-        ReadyUnreadyButtonImage.color = StandardColour;
-        readyUnreadyButtonTextHighlighted.faceColor  = StandardColourText;
-        readyUnreadyButtonTextNormal.faceColor  = StandardColourText;
-        
+
         lobbyManager.Lobby.SetGameServer(SteamUser.GetSteamID());
         NetworkManager.singleton.StartHost();
 
@@ -412,9 +401,6 @@ public class MainMenuLobbyController : MonoBehaviour
         firstTime = false;
         readyUnreadyButtonTextHighlighted.text = "READY";
         readyUnreadyButtonTextNormal.text = "READY";
-        ReadyUnreadyButtonImage.color = StandardColour;
-        readyUnreadyButtonTextHighlighted.faceColor  = StandardColourText;
-        readyUnreadyButtonTextNormal.faceColor  = StandardColourText;
 
         lobbyManager.Lobby.Leave();
         lobbyManager.Lobby = default;
@@ -432,13 +418,10 @@ public class MainMenuLobbyController : MonoBehaviour
         SinglePlayerButton.gameObject.SetActive(false);
 
         firstTime = false;
-        
+
         readyUnreadyButtonTextHighlighted.text = "READY";
         readyUnreadyButtonTextNormal.text = "READY";
-        
-        ReadyUnreadyButtonImage.color = StandardColour;
-        readyUnreadyButtonTextHighlighted.faceColor  = StandardColourText;
-        readyUnreadyButtonTextNormal.faceColor  = StandardColourText;
+
         //here also show in the main menu the "Show lobby button now instead".
         RefreshUI();
         Debug.Log(
@@ -480,17 +463,11 @@ public class MainMenuLobbyController : MonoBehaviour
             {
                 readyUnreadyButtonTextNormal.text = "NOT READY";
                 readyUnreadyButtonTextHighlighted.text = "NOT READY";
-                ReadyUnreadyButtonImage.color = UnreadyColour;
-                readyUnreadyButtonTextNormal.faceColor  = UnreadyColourText;
-                readyUnreadyButtonTextHighlighted.faceColor  = UnreadyColourText;
             }
             else if (!lobbyManager.IsPlayerReady && !firstTime)
             {
                 readyUnreadyButtonTextNormal.text = "READY";
                 readyUnreadyButtonTextHighlighted.text = "READY";
-                ReadyUnreadyButtonImage.color = ReadyColour;
-                readyUnreadyButtonTextNormal.faceColor  = ReadyColourText;
-                readyUnreadyButtonTextHighlighted.faceColor  = ReadyColourText;
             }
 
 
