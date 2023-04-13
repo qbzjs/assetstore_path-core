@@ -354,10 +354,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01b158819e5e6894c876fa138bc96b63, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
+  _playerCharacterNetworkController: {fileID: 0}
   _PlayerInputController: {fileID: 8547894921660849242}
+  CharacterCamera: {fileID: 0}
   Motor: {fileID: 8547894921660849240}
   MaxStableMoveSpeed: 10
   StableMovementSharpness: 15
@@ -378,10 +377,6 @@ MonoBehaviour:
   MeshRoot: {fileID: 8547894921660849207}
   CameraFollowPoint: {fileID: 8547894921660849203}
   CrouchedCapsuleHeight: 1
-  ServerPosition: {x: 0, y: 0, z: 0}
-  ServerRotation: {x: 0, y: 0, z: 0, w: 0}
-  lastSentPosition: {x: 0, y: 0, z: 0}
-  lastSentRotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!114 &8547894921660849242
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -394,9 +389,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a0916d9990cc6e4aa6fbd21ab9ed954, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0.1
+  _playerCharacterNetworkController: {fileID: 0}
   controls: {fileID: -944628639613478452, guid: 6b6175e05aa72774cb40bf0f320e0136,
     type: 3}
   _inputActionMap:
@@ -550,6 +543,15 @@ MonoBehaviour:
     m_Interactions: 
     m_SingletonActionBindings: []
     m_Flags: 0
+  voicechat_action:
+    m_Name: Voicechat_action
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 9b1e6292-f62e-4286-a891-01495bab0099
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
   move: {x: 0, y: 0}
   look: {x: 0, y: 0}
   jump: 0
@@ -566,6 +568,7 @@ MonoBehaviour:
   quickslot_2: 0
   quickslot_3: 0
   quickslot_4: 0
+  voicechat: 0
   cursorLocked: 0
   cursorInputForLook: 1
   MouseSensitivity: 0.5

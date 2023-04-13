@@ -463,6 +463,15 @@ MonoBehaviour:
     m_Interactions: 
     m_SingletonActionBindings: []
     m_Flags: 0
+  voicechat_action:
+    m_Name: Voicechat_action
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: f2cfbddc-9b5a-45c9-873f-6fb00d8d56be
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
   move: {x: 0, y: 0}
   look: {x: 0, y: 0}
   jump: 0
@@ -479,6 +488,7 @@ MonoBehaviour:
   quickslot_2: 0
   quickslot_3: 0
   quickslot_4: 0
+  voicechat: 0
   cursorLocked: 0
   cursorInputForLook: 1
   MouseSensitivity: 0.5
@@ -600,10 +610,11 @@ MonoBehaviour:
   _channelTypeExpanded: 1
   _metadataExpanded: 1
   _activationModeExpanded: 1
-  _tokensExpanded: 0
-  _ampExpanded: 0
+  _tokensExpanded: 1
+  _ampExpanded: 1
+  _playerInputController: {fileID: 0}
   _activationFaderSettings:
-    _volume: 1
+    _volume: 1.4125376
     _fadeInTicks: 0
     _fadeOutTicks: 1500000
   _triggerFaderSettings:
@@ -612,8 +623,8 @@ MonoBehaviour:
     _fadeOutTicks: 11500000
   _broadcastPosition: 1
   _channelType: 0
-  _inputName: 
-  _mode: 1
+  _inputName: PushToTalk
+  _mode: 2
   _muted: 0
   _playerId: 
   _useTrigger: 0

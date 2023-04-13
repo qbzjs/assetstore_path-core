@@ -11,7 +11,6 @@ using Steamworks;
 using UnityEngine;
 using clientAPI = HeathenEngineering.SteamworksIntegration.API;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
@@ -122,7 +121,6 @@ public class MainMenuLobbyController : MonoBehaviour
             lobbyManager.Lobby.Leave();
         }
 
-        Debug.Log("I have been called because someone is requesting to join. - \nthe user is : " + userData.Name);
         Debug.Log("Lobby data requested successfully.");
         Debug.Log($"This is the person i am joining steam cid : {userData.id}");
 
@@ -236,9 +234,10 @@ public class MainMenuLobbyController : MonoBehaviour
         firstTime = false;
         readyUnreadyButtonTextHighlighted.text = "READY";
         readyUnreadyButtonTextNormal.text = "READY";
-
+        lobbyManager.IsPlayerReady = false;
         lobbyManager.Lobby.SetGameServer(SteamUser.GetSteamID());
         NetworkManager.singleton.StartHost();
+
 
         //here also show in the main menu the "Show lobby button now instead"
         RefreshUI();
@@ -259,6 +258,17 @@ public class MainMenuLobbyController : MonoBehaviour
         }
 
         lobbyManager.IsPlayerReady = !lobbyManager.IsPlayerReady;
+        if (lobbyManager.IsPlayerReady)
+        {
+            readyUnreadyButtonTextHighlighted.text = "UNREADY";
+            readyUnreadyButtonTextNormal.text = "UNREADY";
+        }
+        else
+        {
+            readyUnreadyButtonTextHighlighted.text = "READY";
+            readyUnreadyButtonTextNormal.text = "READY";
+        }
+
         RefreshUI();
     }
 
@@ -402,6 +412,8 @@ public class MainMenuLobbyController : MonoBehaviour
         readyUnreadyButtonTextHighlighted.text = "READY";
         readyUnreadyButtonTextNormal.text = "READY";
 
+        lobbyManager.IsPlayerReady = false;
+
         lobbyManager.Lobby.Leave();
         lobbyManager.Lobby = default;
         RefreshUI();
@@ -421,11 +433,10 @@ public class MainMenuLobbyController : MonoBehaviour
 
         readyUnreadyButtonTextHighlighted.text = "READY";
         readyUnreadyButtonTextNormal.text = "READY";
+        lobbyManager.IsPlayerReady = false;
 
         //here also show in the main menu the "Show lobby button now instead".
         RefreshUI();
-        Debug.Log(
-            $"the current prison networkaddress after the start client and networkaddress : {NetworkManager.singleton.networkAddress}");
     }
 
 
@@ -458,18 +469,6 @@ public class MainMenuLobbyController : MonoBehaviour
                 UserData.SetRichPresence("steam_player_group", lobbyManager.Lobby.ToString());
                 UserData.SetRichPresence("steam_player_group_size", lobbyManager.Members.Length.ToString());
             }
-
-            if (lobbyManager.IsPlayerReady)
-            {
-                readyUnreadyButtonTextNormal.text = "NOT READY";
-                readyUnreadyButtonTextHighlighted.text = "NOT READY";
-            }
-            else if (!lobbyManager.IsPlayerReady && !firstTime)
-            {
-                readyUnreadyButtonTextNormal.text = "READY";
-                readyUnreadyButtonTextHighlighted.text = "READY";
-            }
-
 
             if (lobbyManager.IsPlayerOwner)
             {

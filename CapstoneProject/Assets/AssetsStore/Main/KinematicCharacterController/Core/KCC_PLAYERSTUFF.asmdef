@@ -1,9 +1,7 @@
 {
-    "name": "DissonanceVoip",
+    "name": "KCC_PLAYERSTUFF",
     "rootNamespace": "",
-    "references": [
-        "GUID:40b7b196d9488354b8c9fc49ef6ef51b"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,

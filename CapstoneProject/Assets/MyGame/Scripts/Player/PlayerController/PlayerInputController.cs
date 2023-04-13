@@ -6,8 +6,6 @@ namespace MyGame.Scripts.Player.PlayerController
 {
     public class PlayerInputController : MonoBehaviour
     {
-        [SerializeField] private PlayerCharacterNetworkController _playerCharacterNetworkController;
-
         //Reference to the whoele inputactionasset which contains everything.
         [SerializeField] private InputActionAsset controls;
 
@@ -17,6 +15,8 @@ namespace MyGame.Scripts.Player.PlayerController
         //Reference to a playerinput class which comes with inputsystem,
         //i use this to check if the gamecontroller has changed from keyboard to gamepad.
         [SerializeField] private PlayerInput _playerInput;
+
+        [SerializeField] private bool IsMainMenu = false;
 
         //Reference to the actions inside of the controls - inputactionasset.
         public InputAction move_Action,
@@ -34,7 +34,8 @@ namespace MyGame.Scripts.Player.PlayerController
             console_action,
             dropitem_action,
             inventory_action,
-            attack_action;
+            attack_action,
+            voicechat_action;
 
 
         //our reference to the values of the look and move from the action
@@ -55,7 +56,8 @@ namespace MyGame.Scripts.Player.PlayerController
             quickslot_1,
             quickslot_2,
             quickslot_3,
-            quickslot_4;
+            quickslot_4,
+            voicechat;
 
         //our current mouse settings
         [Header("Mouse settings")] public bool cursorLocked = false;
@@ -68,126 +70,154 @@ namespace MyGame.Scripts.Player.PlayerController
             //Assign the inputactionmap to the player inputaction map that i have setup inside of my input action asset.
             _inputActionMap = controls.FindActionMap("Player");
 
-            move_Action = _inputActionMap.FindAction("Move");
-            look_Action = _inputActionMap.FindAction("Look");
-            jump_Action = _inputActionMap.FindAction("Jump");
-            crouch_Action = _inputActionMap.FindAction("Crouch");
-            sprint_Action = _inputActionMap.FindAction("Sprint");
-            switchPerspectiveCamera_Action = _inputActionMap.FindAction("SwitchPerspective");
-            interact_Action = _inputActionMap.FindAction("Interact");
-            pause_Action = _inputActionMap.FindAction("Pause");
-
-            quickslot_1_action = _inputActionMap.FindAction("Inventory");
-            quickslot_2_action = _inputActionMap.FindAction("DropItem");
-            quickslot_3_action = _inputActionMap.FindAction("Attack");
+            voicechat_action = _inputActionMap.FindAction("VoiceChat");
             quickslot_4_action = _inputActionMap.FindAction("Console");
-            console_action = _inputActionMap.FindAction("Quickslot_1");
-            dropitem_action = _inputActionMap.FindAction("Quickslot_2");
-            inventory_action = _inputActionMap.FindAction("Quickslot_3");
-            attack_action = _inputActionMap.FindAction("Quickslot_4");
+
+
+            if (!IsMainMenu)
+            {
+                move_Action = _inputActionMap.FindAction("Move");
+                look_Action = _inputActionMap.FindAction("Look");
+                jump_Action = _inputActionMap.FindAction("Jump");
+                crouch_Action = _inputActionMap.FindAction("Crouch");
+                sprint_Action = _inputActionMap.FindAction("Sprint");
+                switchPerspectiveCamera_Action = _inputActionMap.FindAction("SwitchPerspective");
+                interact_Action = _inputActionMap.FindAction("Interact");
+                pause_Action = _inputActionMap.FindAction("Pause");
+                quickslot_1_action = _inputActionMap.FindAction("Inventory");
+                quickslot_2_action = _inputActionMap.FindAction("DropItem");
+                quickslot_3_action = _inputActionMap.FindAction("Attack");
+                console_action = _inputActionMap.FindAction("Quickslot_1");
+                dropitem_action = _inputActionMap.FindAction("Quickslot_2");
+                inventory_action = _inputActionMap.FindAction("Quickslot_3");
+                attack_action = _inputActionMap.FindAction("Quickslot_4");
+            }
 
             //subscribe to the oncontrolschanged event to run our function
             //when the controls type (gamepad or mouse and keyboard) has been changed.
             _playerInput.onControlsChanged += ControlsChanged;
 
-            //by default we lock the cursor so it doesnt move around the screen.
-            Cursor.lockState = CursorLockMode.Locked;
+            if (IsMainMenu)
+            {
+                //if this is the main menu or any other menu we want to have the screen unlocked.
+                Cursor.lockState = CursorLockMode.None;
+            }
+            else
+            {
+                //by default we lock the cursor so it doesnt move around the screen.
+                Cursor.lockState = CursorLockMode.Locked;
+            }
 
-            move_Action.performed += OnMove;
-            move_Action.canceled += OnEndMove;
 
-            look_Action.performed += OnLook;
-            look_Action.canceled += OnEndLook;
-
-            crouch_Action.performed += OnCrouch;
-            crouch_Action.canceled += OnEndCrouch;
-
-            jump_Action.performed += OnJump;
-            jump_Action.canceled += OnEndJump;
-
-            sprint_Action.performed += OnSprint;
-            sprint_Action.canceled += OnEndSprint;
-
-            switchPerspectiveCamera_Action.performed += OnSwitchCameraPerspective;
-            switchPerspectiveCamera_Action.canceled += OnEndSwitchCameraPerspective;
-
-            interact_Action.performed += OnInteract;
-            interact_Action.canceled += OnEndInteract;
-
-            pause_Action.performed += OnPause;
-
-            quickslot_1_action.performed += OnQuickSlotOne;
-            quickslot_1_action.canceled += OnEndQuickSlotOne;
-
-            quickslot_2_action.performed += OnQuickSlotTwo;
-            quickslot_2_action.canceled += OnEndQuickSlotTwo;
-
-            quickslot_3_action.performed += OnQuickSlotThree;
-            quickslot_3_action.canceled += OnEndQuickSlotThree;
-
-            quickslot_4_action.performed += OnQuickSlotFour;
-            quickslot_4_action.canceled += OnEndQuickSlotFour;
-
+            voicechat_action.performed += OnVoiceChat;
+            voicechat_action.canceled += OnEndVoiceChat;
             console_action.performed += OnConsole;
 
-            inventory_action.performed += OnInventory;
+            if (!IsMainMenu)
+            {
+                move_Action.performed += OnMove;
+                move_Action.canceled += OnEndMove;
 
-            dropitem_action.performed += OnDropItem;
-            dropitem_action.canceled += OnDropItemEnd;
+                look_Action.performed += OnLook;
+                look_Action.canceled += OnEndLook;
 
-            attack_action.performed += OnAttack;
-            attack_action.canceled += OnEndAttack;
+                crouch_Action.performed += OnCrouch;
+                crouch_Action.canceled += OnEndCrouch;
+
+                jump_Action.performed += OnJump;
+                jump_Action.canceled += OnEndJump;
+
+                sprint_Action.performed += OnSprint;
+                sprint_Action.canceled += OnEndSprint;
+
+                switchPerspectiveCamera_Action.performed += OnSwitchCameraPerspective;
+                switchPerspectiveCamera_Action.canceled += OnEndSwitchCameraPerspective;
+
+                interact_Action.performed += OnInteract;
+                interact_Action.canceled += OnEndInteract;
+
+                pause_Action.performed += OnPause;
+
+                quickslot_1_action.performed += OnQuickSlotOne;
+                quickslot_1_action.canceled += OnEndQuickSlotOne;
+
+                quickslot_2_action.performed += OnQuickSlotTwo;
+                quickslot_2_action.canceled += OnEndQuickSlotTwo;
+
+                quickslot_3_action.performed += OnQuickSlotThree;
+                quickslot_3_action.canceled += OnEndQuickSlotThree;
+
+                quickslot_4_action.performed += OnQuickSlotFour;
+                quickslot_4_action.canceled += OnEndQuickSlotFour;
+
+
+                inventory_action.performed += OnInventory;
+
+                dropitem_action.performed += OnDropItem;
+                dropitem_action.canceled += OnDropItemEnd;
+
+                attack_action.performed += OnAttack;
+                attack_action.canceled += OnEndAttack;
+            }
         }
+
 
         public void OnDisable()
         {
             //unsubscribe to the oncontrolschanged event to avoid memory leaks this will disconnect it from the function.
             _playerInput.onControlsChanged -= ControlsChanged;
 
-            move_Action.performed -= OnMove;
-            move_Action.canceled -= OnEndMove;
-
-            look_Action.performed -= OnLook;
-            look_Action.canceled -= OnEndLook;
-
-            crouch_Action.performed -= OnCrouch;
-            crouch_Action.canceled -= OnEndCrouch;
-
-            jump_Action.performed -= OnJump;
-            jump_Action.canceled -= OnEndJump;
-
-            sprint_Action.performed -= OnSprint;
-            sprint_Action.canceled -= OnEndSprint;
-
-            switchPerspectiveCamera_Action.performed -= OnSwitchCameraPerspective;
-            switchPerspectiveCamera_Action.canceled -= OnEndSwitchCameraPerspective;
-
-            interact_Action.performed -= OnInteract;
-            interact_Action.canceled -= OnEndInteract;
-
-            pause_Action.performed -= OnPause;
-
-            quickslot_1_action.performed -= OnQuickSlotOne;
-            quickslot_1_action.canceled -= OnEndQuickSlotOne;
-
-            quickslot_2_action.performed -= OnQuickSlotTwo;
-            quickslot_2_action.canceled -= OnEndQuickSlotTwo;
-
-            quickslot_3_action.performed -= OnQuickSlotThree;
-            quickslot_3_action.canceled -= OnEndQuickSlotThree;
-
-            quickslot_4_action.performed -= OnQuickSlotFour;
-            quickslot_4_action.canceled -= OnEndQuickSlotFour;
+            voicechat_action.performed -= OnVoiceChat;
+            voicechat_action.canceled -= OnEndVoiceChat;
 
             console_action.performed -= OnConsole;
 
-            inventory_action.performed -= OnInventory;
+            if (!IsMainMenu)
+            {
+                move_Action.performed -= OnMove;
+                move_Action.canceled -= OnEndMove;
 
-            dropitem_action.performed -= OnDropItem;
-            dropitem_action.canceled -= OnDropItemEnd;
+                look_Action.performed -= OnLook;
+                look_Action.canceled -= OnEndLook;
 
-            attack_action.performed -= OnAttack;
-            attack_action.canceled -= OnEndAttack;
+                crouch_Action.performed -= OnCrouch;
+                crouch_Action.canceled -= OnEndCrouch;
+
+                jump_Action.performed -= OnJump;
+                jump_Action.canceled -= OnEndJump;
+
+                sprint_Action.performed -= OnSprint;
+                sprint_Action.canceled -= OnEndSprint;
+
+                switchPerspectiveCamera_Action.performed -= OnSwitchCameraPerspective;
+                switchPerspectiveCamera_Action.canceled -= OnEndSwitchCameraPerspective;
+
+                interact_Action.performed -= OnInteract;
+                interact_Action.canceled -= OnEndInteract;
+
+                pause_Action.performed -= OnPause;
+
+                quickslot_1_action.performed -= OnQuickSlotOne;
+                quickslot_1_action.canceled -= OnEndQuickSlotOne;
+
+                quickslot_2_action.performed -= OnQuickSlotTwo;
+                quickslot_2_action.canceled -= OnEndQuickSlotTwo;
+
+                quickslot_3_action.performed -= OnQuickSlotThree;
+                quickslot_3_action.canceled -= OnEndQuickSlotThree;
+
+                quickslot_4_action.performed -= OnQuickSlotFour;
+                quickslot_4_action.canceled -= OnEndQuickSlotFour;
+
+
+                inventory_action.performed -= OnInventory;
+
+                dropitem_action.performed -= OnDropItem;
+                dropitem_action.canceled -= OnDropItemEnd;
+
+                attack_action.performed -= OnAttack;
+                attack_action.canceled -= OnEndAttack;
+            }
         }
 
         private void ControlsChanged(PlayerInput playerInput)
@@ -216,32 +246,17 @@ namespace MyGame.Scripts.Player.PlayerController
 
         public void OnMove(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             MoveInput(ctx.action.ReadValue<Vector2>());
         }
 
         public void OnEndMove(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             MoveInput(new Vector2(0, 0));
         }
 
 
         public void OnLook(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             if (cursorInputForLook)
             {
                 LookInput(ctx.action.ReadValue<Vector2>());
@@ -250,268 +265,153 @@ namespace MyGame.Scripts.Player.PlayerController
 
         public void OnEndLook(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             LookInput(new Vector2(0, 0));
         }
 
 
         public void OnJump(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             JumpInput(ctx.action.IsPressed());
         }
 
 
         public void OnEndJump(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             JumpInput(false);
         }
 
         public void OnSprint(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             SprintInput(ctx.action.IsPressed());
         }
 
         public void OnEndSprint(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             SprintInput(false);
         }
 
         public void OnCrouch(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             CrouchInput(ctx.action.IsPressed());
         }
 
 
         public void OnEndCrouch(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             CrouchInput(false);
         }
 
         public void OnEndSwitchCameraPerspective(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             SwitchCameraPerspectiveInput(ctx.action.IsPressed());
         }
 
         public void OnSwitchCameraPerspective(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             SwitchCameraPerspectiveInput(false);
         }
 
         public void OnPause(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             pause = !pause;
             PauseInput(pause);
         }
 
         public void OnInventory(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             inventory = !inventory;
             InventoryInput(inventory);
         }
 
         public void OnDropItem(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             DropItemInput(dropitem);
         }
 
         public void OnDropItemEnd(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             DropItemInput(false);
         }
 
         public void OnInteract(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             InteractInput(ctx.action.IsPressed());
         }
 
         public void OnEndInteract(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             InteractInput(false);
         }
 
         public void OnQuickSlotOne(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             QuickSlotOneInput(ctx.action.IsPressed());
         }
 
         public void OnEndQuickSlotOne(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             QuickSlotOneInput(false);
         }
 
         public void OnQuickSlotTwo(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             QuickSlotTwoInput(ctx.action.IsPressed());
         }
 
         public void OnEndQuickSlotTwo(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             QuickSlotTwoInput(false);
         }
 
         public void OnQuickSlotThree(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             QuickSlotThreeInput(ctx.action.IsPressed());
         }
 
         public void OnEndQuickSlotThree(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             QuickSlotThreeInput(false);
         }
 
         public void OnQuickSlotFour(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             QuickSlotFourInput(ctx.action.IsPressed());
         }
 
         public void OnEndQuickSlotFour(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             QuickSlotFourInput(false);
         }
 
         public void OnAttack(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             AttackInput(ctx.action.IsPressed());
         }
 
         public void OnEndAttack(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             AttackInput(false);
         }
 
         public void OnConsole(InputAction.CallbackContext ctx)
         {
-            if (!_playerCharacterNetworkController.isLocalPlayer)
-            {
-                return;
-            }
-
             console = !console;
             ConsoleInput(console);
+        }
+
+        public void OnVoiceChat(InputAction.CallbackContext ctx)
+        {
+            VoiceChatInput(true);
+        }
+
+        public void OnEndVoiceChat(InputAction.CallbackContext ctx)
+        {
+            VoiceChatInput(false);
+        }
+
+        public void VoiceChatInput(bool newVoiceChatInput)
+        {
+            voicechat = newVoiceChatInput;
         }
 
         public void DropItemInput(bool newDropItemState)
@@ -609,19 +509,34 @@ namespace MyGame.Scripts.Player.PlayerController
 
         public void PauseInput(bool newPauseState)
         {
-            if (newPauseState)
+            if (!IsMainMenu)
             {
-                this.gameObject.GetComponent<PlayerCharacterController>().enabled = false;
-                cursorLocked = false;
-                Cursor.lockState = CursorLockMode.None;
+                if (newPauseState)
+                {
+                    if (this.gameObject.GetComponent<PlayerCharacterController>() != null)
+                    {
+                        this.gameObject.GetComponent<PlayerCharacterController>().enabled = false;
+                    }
+
+                    cursorLocked = false;
+                    Cursor.lockState = CursorLockMode.None;
 //            _gameManager.PauseGame();
+                }
+                else
+                {
+                    if (this.gameObject.GetComponent<PlayerCharacterController>() != null)
+                    {
+                        this.gameObject.GetComponent<PlayerCharacterController>().enabled = true;
+                    }
+
+                    cursorLocked = true;
+                    Cursor.lockState = CursorLockMode.Locked;
+                    //  _gameManager.UnpauseGame();
+                }
             }
             else
             {
-                this.gameObject.GetComponent<PlayerCharacterController>().enabled = true;
-                cursorLocked = true;
-                Cursor.lockState = CursorLockMode.Locked;
-                //  _gameManager.UnpauseGame();
+                Debug.Log("Main menu cannot be paused.");
             }
 
             //_gameManager.SetCursorState(newPauseState);

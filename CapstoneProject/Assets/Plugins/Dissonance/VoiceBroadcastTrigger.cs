@@ -2,6 +2,7 @@ using System;
 using Dissonance.Audio;
 using Dissonance.VAD;
 using JetBrains.Annotations;
+using MyGame.Scripts.Player.PlayerController;
 using UnityEngine;
 
 namespace Dissonance
@@ -16,11 +17,19 @@ namespace Dissonance
         : BaseCommsTrigger, IVoiceActivationListener, IVoiceBroadcastTrigger
     {
         #region field and properties
-        [SerializeField] private bool _channelTypeExpanded;     // <
-        [SerializeField] private bool _metadataExpanded;        // < These properties contain state used by the inspector. It needs
-        [SerializeField] private bool _activationModeExpanded;  // < to be stored here because the inspector is sometimes recreated
-        [SerializeField] private bool _tokensExpanded;          // < by the editor, discarding all state (for example, making things
-        [SerializeField] private bool _ampExpanded;             // < inside foldouts inaccessible!
+
+        [SerializeField] private bool _channelTypeExpanded; // <
+
+        [SerializeField]
+        private bool _metadataExpanded; // < These properties contain state used by the inspector. It needs
+
+        [SerializeField]
+        private bool _activationModeExpanded; // < to be stored here because the inspector is sometimes recreated
+
+        [SerializeField]
+        private bool _tokensExpanded; // < by the editor, discarding all state (for example, making things
+
+        [SerializeField] private bool _ampExpanded; // < inside foldouts inaccessible!
 
         private PlayerChannel? _playerChannel;
         private RoomChannel? _roomChannel;
@@ -29,32 +38,41 @@ namespace Dissonance
         private CommActivationMode? _previousMode;
         private IDissonancePlayer _self;
 
+
         private Fader _activationFader;
+
         // ReSharper disable once FieldCanBeMadeReadOnly.Local (Justification: Confuses unity serialization)
-        [SerializeField] private VolumeFaderSettings _activationFaderSettings = new VolumeFaderSettings {
+        [SerializeField] private VolumeFaderSettings _activationFaderSettings = new VolumeFaderSettings
+        {
             Volume = 1,
             FadeIn = TimeSpan.Zero,
             FadeOut = TimeSpan.FromSeconds(0.15f)
         };
+
         /// <summary>
         /// Access volume fader settings which are applied every time the trigger activates with PTT/VAD
         /// </summary>
-        [NotNull] public VolumeFaderSettings ActivationFader
+        [NotNull]
+        public VolumeFaderSettings ActivationFader
         {
             get { return _activationFaderSettings; }
         }
 
         private Fader _triggerFader;
+
         // ReSharper disable once FieldCanBeMadeReadOnly.Local (Justification: Confuses unity serialization)
-        [SerializeField] private VolumeFaderSettings _triggerFaderSettings = new VolumeFaderSettings {
+        [SerializeField] private VolumeFaderSettings _triggerFaderSettings = new VolumeFaderSettings
+        {
             Volume = 1,
             FadeIn = TimeSpan.FromSeconds(0.75f),
             FadeOut = TimeSpan.FromSeconds(1.15f)
         };
+
         /// <summary>
         /// Access volume fader settings which are applied every time the collider trigger is entered/exited
         /// </summary>
-        [NotNull] public VolumeFaderSettings ColliderTriggerFader
+        [NotNull]
+        public VolumeFaderSettings ColliderTriggerFader
         {
             get { return _triggerFaderSettings; }
         }
@@ -67,7 +85,8 @@ namespace Dissonance
             get { return _activationFader.Volume * (UseColliderTrigger ? _triggerFader.Volume : 1); }
         }
 
-        [SerializeField]private bool _broadcastPosition = true;
+        [SerializeField] private bool _broadcastPosition = true;
+
         /// <summary>
         /// Get or set if voice sent with this broadcast trigger should use positional playback
         /// </summary>
@@ -95,7 +114,8 @@ namespace Dissonance
             }
         }
 
-        [SerializeField]private CommTriggerTarget _channelType;
+        [SerializeField] private CommTriggerTarget _channelType;
+
         /// <summary>
         /// Get or set the target type of voice sent with this trigger
         /// </summary>
@@ -114,7 +134,10 @@ namespace Dissonance
             }
         }
 
-        [SerializeField]private string _inputName;
+        [SerializeField] private PlayerInputController _playerInputController;
+
+        [SerializeField] private string _inputName;
+
         /// <summary>
         /// Get or set the input axis name (only applicable if this trigger is using Push-To-Talk)
         /// </summary>
@@ -124,7 +147,8 @@ namespace Dissonance
             set { _inputName = value; }
         }
 
-        [SerializeField]private CommActivationMode _mode = CommActivationMode.VoiceActivation;
+        [SerializeField] private CommActivationMode _mode = CommActivationMode.VoiceActivation;
+
         /// <summary>
         /// Get or set how the player indicates speaking intent to this trigger
         /// </summary>
@@ -134,7 +158,8 @@ namespace Dissonance
             set { _mode = value; }
         }
 
-        [SerializeField]private bool _muted;
+        [SerializeField] private bool _muted;
+
         /// <summary>
         /// Get or set if this voice broadcast trigger is muted
         /// </summary>
@@ -164,7 +189,8 @@ namespace Dissonance
             }
         }
 
-        [SerializeField]private string _playerId;
+        [SerializeField] private string _playerId;
+
         /// <summary>
         /// Get or set the target player ID of this trigger (only applicable if the channel type is 'player')
         /// </summary>
@@ -184,7 +210,8 @@ namespace Dissonance
             }
         }
 
-        [SerializeField]private bool _useTrigger;
+        [SerializeField] private bool _useTrigger;
+
         /// <summary>
         /// Get or set if this broadcast trigger should use a unity trigger volume
         /// </summary>
@@ -194,7 +221,8 @@ namespace Dissonance
             set { _useTrigger = value; }
         }
 
-        [SerializeField]private string _roomName;
+        [SerializeField] private string _roomName;
+
         /// <summary>
         /// Get or set the target room of this trigger (only applicable if the channel type is 'room')
         /// </summary>
@@ -214,7 +242,8 @@ namespace Dissonance
             }
         }
 
-        [SerializeField]private ChannelPriority _priority = ChannelPriority.None;
+        [SerializeField] private ChannelPriority _priority = ChannelPriority.None;
+
         /// <summary>
         /// Get or set the priority of voice sent with this trigger
         /// </summary>
@@ -273,11 +302,21 @@ namespace Dissonance
                 return true;
             }
         }
+
         #endregion
+
 
         protected override void Start()
         {
             base.Start();
+            if (gameObject.GetComponent<PlayerInputController>() != null)
+            {
+                _playerInputController = gameObject.GetComponent<PlayerInputController>();
+            }
+            else
+            {
+                _playerInputController = GameObject.FindObjectOfType<PlayerInputController>();
+            }
 
             _self = GetComponent<IDissonancePlayer>() ?? GetComponentInParent<IDissonancePlayer>();
         }
@@ -325,7 +364,8 @@ namespace Dissonance
             {
                 // If we're speaking and the activation fader is not going to the max volume yet, start fading in
                 if (Math.Abs(_activationFader.EndVolume - _activationFaderSettings.Volume) > float.Epsilon)
-                    _activationFader.FadeTo(_activationFaderSettings.Volume, (float)_activationFaderSettings.FadeIn.TotalSeconds);
+                    _activationFader.FadeTo(_activationFaderSettings.Volume,
+                        (float)_activationFaderSettings.FadeIn.TotalSeconds);
             }
             else
             {
@@ -447,7 +487,7 @@ namespace Dissonance
                     return _isVadSpeaking;
 
                 case CommActivationMode.PushToTalk:
-                    return Input.GetAxis(InputName) > 0.5f;
+                    return _playerInputController.voicechat;
 
                 case CommActivationMode.Open:
                     return true;
@@ -462,6 +502,7 @@ namespace Dissonance
         }
 
         #region channel management
+
         private void SetChannelVolume(float value)
         {
             if (_playerChannel.HasValue)
@@ -484,12 +525,14 @@ namespace Dissonance
 
             if (ChannelType == CommTriggerTarget.Room)
             {
-                _roomChannel = Comms.RoomChannels.Open(new RoomName(RoomName), _broadcastPosition, _priority, CurrentFaderVolume);
+                _roomChannel = Comms.RoomChannels.Open(new RoomName(RoomName), _broadcastPosition, _priority,
+                    CurrentFaderVolume);
             }
             else if (ChannelType == CommTriggerTarget.Player)
             {
                 if (PlayerId != null)
-                    _playerChannel = Comms.PlayerChannels.Open(PlayerId, _broadcastPosition, _priority, CurrentFaderVolume);
+                    _playerChannel =
+                        Comms.PlayerChannels.Open(PlayerId, _broadcastPosition, _priority, CurrentFaderVolume);
                 else
                     Log.Warn("Attempting to transmit to a null player ID");
             }
@@ -517,9 +560,11 @@ namespace Dissonance
                 _playerChannel = null;
             }
         }
+
         #endregion
 
         #region IVoiceActivationListener impl
+
         void IVoiceActivationListener.VoiceActivationStart()
         {
             _isVadSpeaking = true;
@@ -529,6 +574,7 @@ namespace Dissonance
         {
             _isVadSpeaking = false;
         }
+
         #endregion
     }
 }

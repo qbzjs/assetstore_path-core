@@ -30,6 +30,8 @@ namespace Mirror
         [Tooltip("Animator that will have parameters synchronized")]
         public Animator animator;
 
+        public bool useLocalAnimator = false;
+        
         /// <summary>
         /// Syncs animator.speed
         /// </summary>
@@ -73,6 +75,11 @@ namespace Mirror
 
         void Awake()
         {
+            if (useLocalAnimator)
+            {
+                animator = gameObject.GetComponent<Animator>();
+            }
+            
             // store the animator parameters in a variable - the "Animator.parameters" getter allocates
             // a new parameter array every time it is accessed so we should avoid doing it in a loop
             parameters = animator.parameters
@@ -85,6 +92,8 @@ namespace Mirror
             animationHash = new int[animator.layerCount];
             transitionHash = new int[animator.layerCount];
             layerWeight = new float[animator.layerCount];
+
+
         }
 
         void FixedUpdate()

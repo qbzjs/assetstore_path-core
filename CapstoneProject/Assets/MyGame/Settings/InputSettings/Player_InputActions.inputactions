@@ -148,6 +148,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "VoiceChat",
+                    "type": "Button",
+                    "id": "a737dcc1-3b41-4c15-8f7e-9474d7e15a57",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -368,6 +377,17 @@
                     "processors": "",
                     "groups": "Mouse/Keyboard",
                     "action": "Console",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e9d52907-c589-4825-8b03-4f1694c06d34",
+                    "path": "<Keyboard>/v",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Mouse/Keyboard",
+                    "action": "VoiceChat",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
