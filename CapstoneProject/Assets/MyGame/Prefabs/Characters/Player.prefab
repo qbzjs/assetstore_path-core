@@ -309,7 +309,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a0916d9990cc6e4aa6fbd21ab9ed954, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerCharacterNetworkController: {fileID: 982426216142513513}
   controls: {fileID: -944628639613478452, guid: 6b6175e05aa72774cb40bf0f320e0136,
     type: 3}
   _inputActionMap:
@@ -319,6 +318,7 @@ MonoBehaviour:
     m_Actions: []
     m_Bindings: []
   _playerInput: {fileID: 982426216142513438}
+  IsMainMenu: 0
   move_Action:
     m_Name: Move_Action
     m_Type: 0
@@ -612,9 +612,8 @@ MonoBehaviour:
   _activationModeExpanded: 1
   _tokensExpanded: 1
   _ampExpanded: 1
-  _playerInputController: {fileID: 0}
   _activationFaderSettings:
-    _volume: 1.4125376
+    _volume: 1.7782794
     _fadeInTicks: 0
     _fadeOutTicks: 1500000
   _triggerFaderSettings:
@@ -623,6 +622,7 @@ MonoBehaviour:
     _fadeOutTicks: 11500000
   _broadcastPosition: 1
   _channelType: 0
+  _playerInputController: {fileID: 0}
   _inputName: PushToTalk
   _mode: 2
   _muted: 0
